@@ -1,0 +1,28 @@
+.nav a {
+    color:white;
+    text-decoration: none;
+}
+.navContainer {
+    display: flex;
+    justify-content: flex-end;
+    padding: 0 20px;
+  }
+
+  .linkItem {
+    display: flex;
+    align-items: center; /* vertically centers the icon and text */
+    margin-right: 10px; /* optional: space between each link */
+  }
+  .linkItem svg {
+    margin-right: 8px; /* space between the SVG icon and text */
+
+  }
+
+  .profile {
+    width:30px;
+    height: 30px;
+    border-radius: 50%;
+    margin-left: 50px;
+    object-fit: cover; /* To make sure the image covers the entire area of the container without distorting */
+  }
+  

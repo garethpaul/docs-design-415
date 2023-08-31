@@ -1,0 +1,10 @@
+@font-face {
+    font-family: 'ColfaxAI'; /* You can name this whatever you like */
+    src: url('/fonts/ColfaxAIRegular.woff2') format('woff2');
+    font-weight: normal; /* or bold, etc. if you have different font weights */
+    font-style: normal; /* or italic, etc. if you have different font styles */
+}
+
+.layout {
+    font-family: 'ColfaxAI', helvetica, sans-serif
+}
