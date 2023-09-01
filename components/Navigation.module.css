@@ -1,6 +1,8 @@
 .nav a {
-    color:white;
+    color:black;
     text-decoration: none;
+    font-size: 14px;
+    margin-right: 20px;
 }
 .navContainer {
     display: flex;

@@ -25,3 +25,16 @@
     }
 }
   
+.cm-line {
+    font-size: "11px"
+}
+
+.CodeMirror {
+    font-size: 11px; /* Adjust the size as per your preference */
+  }
+
+  .cm-gutters {
+    background-color: transparent !important;
+    border-right: none !important;
+  }
+  

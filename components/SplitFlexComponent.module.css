@@ -1,0 +1,10 @@
+.flexContainer {
+    display: flex;
+    width: 100%;
+  }
+  
+  .flexItem {
+    flex: 1;
+    padding: 10px;
+    max-width: 50%;
+}

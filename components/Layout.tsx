@@ -25,7 +25,7 @@ const Layout: React.FC<Props> = ({
         <meta name="viewport" content="initial-scale=1.0, width=device-width" />
       </Head>
       <Navigation />
-      <div style={{ padding: "10px" }}>{children}</div>
+      <div>{children}</div>
     </div>
   );
 };
