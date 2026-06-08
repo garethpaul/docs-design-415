@@ -1,5 +1,8 @@
 ## Docs Design 415 Vision
 
+This document explains the current state and direction of the project.
+Project overview and developer docs: [`README.md`](README.md)
+
 Docs Design 415 is a Next.js "Try Now Docs" design prototype. It expands the
 docs onboarding surface with additional layout, sidebar, language, and call to
 action components.
