@@ -31,39 +31,60 @@ Additional scan context:
 ### Prerequisites
 
 - Git
-- Node.js and npm
+- Node.js 20.9 or newer and npm
 
 ### Setup
 
 ```bash
 git clone https://github.com/garethpaul/docs-design-415.git
 cd docs-design-415
-npm install
+npm ci
+export OPENAI_API_KEY=sk-...
+# Optional: comma-separated allow-list for proxied chat models.
+export OPENAI_ALLOWED_MODELS=gpt-4o-mini,gpt-3.5-turbo
 ```
 
 The setup commands above are derived from repository files. Legacy mobile, Python, or JavaScript samples may require older SDKs or package versions than a modern workstation uses by default.
 
 ## Running or Using the Project
 
-- Run `npm start` for the default development command.
-- Run `npm run dev` for the development server when that script is appropriate.
+- Run `npm run dev` for the local development server.
+- Run `npm run build` before using `npm start` for the production server.
 
 Detected npm scripts:
 
-- `npm run build` - `next build`
-- `npm run dev` - `next`
-- `npm run start` - `next start`
-- `npm run type-check` - `tsc`
+- `npm run audit` - `npm audit --audit-level=high`
+- `npm run build` - `node node_modules/next/dist/bin/next build --webpack`
+- `npm run check` - `scripts/check-baseline.sh`
+- `npm run dev` - `node node_modules/next/dist/bin/next dev`
+- `npm run start` - `node node_modules/next/dist/bin/next start`
+- `npm run test` - `npm run type-check && npm run test:parser && npm run build && npm run check && npm run audit`
+- `npm run test:parser` - `node node_modules/tsx/dist/cli.mjs scripts/test-execute-parser.ts`
+- `npm run type-check` - `node node_modules/typescript/bin/tsc --noEmit`
 
 ## Testing and Verification
 
-- No dedicated automated test command was identified from the checked-in files. Verify changes by running the relevant build or manually exercising the sample.
+Run the local verification gate before changing the editor, docs route, or
+execute API:
+
+```bash
+npm test
+```
+
+`npm test` runs TypeScript checks, the Next build, parser/validator regression
+tests through the source baseline guard, and `npm audit --audit-level=high`.
+The execute API requires `OPENAI_API_KEY` at runtime and validates submitted
+examples before calling the OpenAI SDK.
 
 When the required SDK or runtime is unavailable, use static checks and source review first, then verify on a machine that has the matching platform toolchain.
 
 ## Configuration and Secrets
 
 - Detected references to OpenAI. Keep API keys, OAuth credentials, tokens, and account-specific values in local configuration only.
+- `OPENAI_API_KEY` must be provided through the environment. Do not commit
+  OpenAI keys or sample outputs containing private prompt data.
+- `OPENAI_ALLOWED_MODELS` can narrow the comma-separated chat model allow-list.
+  When unset, the execute API only accepts the checked-in default allow-list.
 
 ## Security and Privacy Notes
 
@@ -76,6 +97,8 @@ When the required SDK or runtime is unavailable, use static checks and source re
 
 - See `SECURITY.md` for vulnerability reporting and safe research guidance.
 - See `VISION.md` for project direction and contribution guardrails.
+- See `docs/plans/2026-06-08-docs-design-execute-api-baseline.md` for the
+  current execute API hardening baseline.
 
 ## Contributing
 
