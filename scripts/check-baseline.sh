@@ -46,6 +46,9 @@ if (!pkg.scripts.test.includes("npm run test:parser")) {
 if (!pkg.scripts.test.includes("npm run build")) {
   throw new Error("npm test must include the Next build gate");
 }
+if (!pkg.scripts.build.includes("next build --webpack")) {
+  throw new Error("npm run build must use the stable Webpack builder");
+}
 if (!pkg.engines || !pkg.engines.node) {
   throw new Error("package.json must declare the supported Node engine");
 }

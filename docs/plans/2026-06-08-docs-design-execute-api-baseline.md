@@ -43,8 +43,12 @@ Verification: Type-check and source guards confirm the editor no longer double-e
 
 ### U3: Reproducible tooling baseline
 
-Files: `package.json`, `package-lock.json`, `tsconfig.json`, `global.d.ts`, `scripts/check-baseline.sh`, `README.md`, `VISION.md`
+Files: `package.json`, `package-lock.json`, `tsconfig.json`, `global.d.ts`,
+`scripts/check-baseline.sh`, `README.md`, `VISION.md`
 
-Approach: Pin framework/tooling dependencies, declare Node 20.9+, add parser and baseline checks, document `OPENAI_API_KEY` and `OPENAI_ALLOWED_MODELS`, and make `npm test` the local shipping gate.
+Approach: Pin framework/tooling dependencies, declare Node 20.9+, keep the
+default Next builder path, add parser and baseline checks, document
+`OPENAI_API_KEY` and `OPENAI_ALLOWED_MODELS`, and make `npm test` the local
+shipping gate.
 
 Verification: `npm test`, `npm audit --audit-level=high`, and `git diff --check` pass on the default `docs-page` branch.
