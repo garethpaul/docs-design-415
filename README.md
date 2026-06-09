@@ -77,6 +77,7 @@ npm test
 build, parser/validator regression tests through the source baseline guard,
 and `npm audit --audit-level=high`. The execute API requires `OPENAI_API_KEY`
 at runtime and validates submitted examples before calling the OpenAI SDK.
+It rejects whitespace-only message content so blank prompts are not proxied.
 
 When the required SDK or runtime is unavailable, use static checks and source review first, then verify on a machine that has the matching platform toolchain.
 
@@ -101,6 +102,8 @@ When the required SDK or runtime is unavailable, use static checks and source re
 - See `VISION.md` for project direction and contribution guardrails.
 - See `docs/plans/2026-06-08-docs-design-execute-api-baseline.md` for the
   current execute API hardening baseline.
+- See `docs/plans/2026-06-09-docs-design-whitespace-message-guard.md` for the
+  whitespace-only message content guard.
 
 ## Contributing
 

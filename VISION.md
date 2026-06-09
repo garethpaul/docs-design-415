@@ -32,6 +32,7 @@ Current baseline:
   when maintainers need a narrower model allow-list.
 - The editor sends the current code string directly and avoids logging prompt
   content, parsed parameters, or provider responses.
+- The execute API rejects whitespace-only message content before proxying.
 
 Next priorities:
 

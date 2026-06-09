@@ -1,5 +1,10 @@
 # Changes
 
+## 2026-06-09
+
+- Rejected whitespace-only message content in execute API parser validation and
+  added a regression guard.
+
 ## 2026-06-08
 
 - Added a root `make check` wrapper for the existing npm verification gate.

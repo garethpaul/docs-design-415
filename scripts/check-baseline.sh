@@ -8,6 +8,7 @@ EDITOR="$ROOT_DIR/components/Editor.tsx"
 README="$ROOT_DIR/README.md"
 PLAN="$ROOT_DIR/docs/plans/2026-06-08-docs-design-execute-api-baseline.md"
 CHECK_PLAN="$ROOT_DIR/docs/plans/2026-06-08-docs-design-check-wrapper.md"
+WHITESPACE_PLAN="$ROOT_DIR/docs/plans/2026-06-09-docs-design-whitespace-message-guard.md"
 
 require_file() {
   path=$1
@@ -27,6 +28,7 @@ for path in \
   "components/Editor.tsx" \
   "docs/plans/2026-06-08-docs-design-check-wrapper.md" \
   "docs/plans/2026-06-08-docs-design-execute-api-baseline.md" \
+  "docs/plans/2026-06-09-docs-design-whitespace-message-guard.md" \
   "scripts/test-execute-parser.ts" \
   "scripts/check-baseline.sh"; do
   require_file "$path"
@@ -91,6 +93,16 @@ for required in \
   fi
 done
 
+if ! grep -Fq "content.trim().length === 0" "$API"; then
+  printf '%s\n' "execute API must reject whitespace-only message content." >&2
+  exit 1
+fi
+
+if ! grep -Fq 'content: "   \\n\\t  "' "$ROOT_DIR/scripts/test-execute-parser.ts"; then
+  printf '%s\n' "Parser tests must cover whitespace-only message content." >&2
+  exit 1
+fi
+
 if grep -Fq "JSON.stringify(codeContent)" "$EDITOR"; then
   printf '%s\n' "Editor must send codeContent directly; do not double-encode it." >&2
   exit 1
@@ -111,11 +123,22 @@ if ! grep -Fq "status: completed" "$CHECK_PLAN"; then
   exit 1
 fi
 
+if ! grep -Fq "status: completed" "$WHITESPACE_PLAN"; then
+  printf '%s\n' "Whitespace message guard plan must be marked completed." >&2
+  exit 1
+fi
+
+if ! grep -Fq "make check" "$WHITESPACE_PLAN"; then
+  printf '%s\n' "Whitespace message guard plan must record make check verification." >&2
+  exit 1
+fi
+
 if ! grep -Fq "OPENAI_API_KEY" "$README" ||
   ! grep -Fq "OPENAI_ALLOWED_MODELS" "$README" ||
   ! grep -Fq "npm test" "$README" ||
-  ! grep -Fq "make check" "$README"; then
-  printf '%s\n' "README must document OPENAI_API_KEY, OPENAI_ALLOWED_MODELS, npm test, and make check." >&2
+  ! grep -Fq "make check" "$README" ||
+  ! grep -Fq "whitespace-only message content" "$README"; then
+  printf '%s\n' "README must document OPENAI_API_KEY, OPENAI_ALLOWED_MODELS, npm test, make check, and blank message handling." >&2
   exit 1
 fi
 
