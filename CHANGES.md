@@ -2,6 +2,8 @@
 
 ## 2026-06-09
 
+- Cleared ignored `.next` output before Webpack builds so repeated local checks
+  do not reuse stale Next trace files.
 - Preserved extracted prototype keys as own fields so execute API parameter and
   message allow-lists reject them.
 - Restricted execute API request bodies to the `code` field before parsing

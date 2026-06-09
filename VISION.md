@@ -21,6 +21,7 @@ Priority:
 - Preserve the richer docs layout and component set on the default branch
 - Keep `npm run dev`, `npm run build`, `npm run type-check`, and `npm test`
   meaningful
+- Keep repeated Webpack builds free of stale `.next` trace state
 - Avoid committing API keys or proxy secrets
 - Keep visual changes tied to the docs onboarding purpose
 

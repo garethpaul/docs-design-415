@@ -11,6 +11,7 @@ CHECK_PLAN="$ROOT_DIR/docs/plans/2026-06-08-docs-design-check-wrapper.md"
 WHITESPACE_PLAN="$ROOT_DIR/docs/plans/2026-06-09-docs-design-whitespace-message-guard.md"
 MODEL_PLAN="$ROOT_DIR/docs/plans/2026-06-09-docs-design-model-allowlist-narrowing.md"
 CONTENT_TYPE_PLAN="$ROOT_DIR/docs/plans/2026-06-09-docs-design-json-content-type-guard.md"
+BUILD_CACHE_PLAN="$ROOT_DIR/docs/plans/2026-06-09-docs-design-clean-next-build.md"
 MESSAGE_FIELD_PLAN="$ROOT_DIR/docs/plans/2026-06-09-docs-design-message-field-allowlist.md"
 BODY_FIELD_PLAN="$ROOT_DIR/docs/plans/2026-06-09-docs-design-body-field-allowlist.md"
 PROTOTYPE_KEY_PLAN="$ROOT_DIR/docs/plans/2026-06-09-docs-design-prototype-key-rejection.md"
@@ -33,6 +34,7 @@ for path in \
   "components/Editor.tsx" \
   "docs/plans/2026-06-08-docs-design-check-wrapper.md" \
   "docs/plans/2026-06-08-docs-design-execute-api-baseline.md" \
+  "docs/plans/2026-06-09-docs-design-clean-next-build.md" \
   "docs/plans/2026-06-09-docs-design-json-content-type-guard.md" \
   "docs/plans/2026-06-09-docs-design-body-field-allowlist.md" \
   "docs/plans/2026-06-09-docs-design-message-field-allowlist.md" \
@@ -61,8 +63,8 @@ if (!pkg.scripts.test.includes("npm run test:parser")) {
 if (!pkg.scripts.test.includes("npm run build")) {
   throw new Error("npm test must include the Next build gate");
 }
-if (!pkg.scripts.build.includes("next build --webpack")) {
-  throw new Error("npm run build must use the stable Webpack builder");
+if (!pkg.scripts.build.includes("rm -rf .next &&") || !pkg.scripts.build.includes("next build --webpack")) {
+  throw new Error("npm run build must clear .next and use the stable Webpack builder");
 }
 if (!pkg.engines || !pkg.engines.node) {
   throw new Error("package.json must declare the supported Node engine");
@@ -224,6 +226,16 @@ if ! grep -Fq "make check" "$MESSAGE_FIELD_PLAN"; then
   exit 1
 fi
 
+if ! grep -Fq "Status: Completed" "$BUILD_CACHE_PLAN"; then
+  printf '%s\n' "Clean Next build plan must be marked completed." >&2
+  exit 1
+fi
+
+if ! grep -Fq "make check" "$BUILD_CACHE_PLAN"; then
+  printf '%s\n' "Clean Next build plan must record make check verification." >&2
+  exit 1
+fi
+
 if ! grep -Fq "Status: Completed" "$PROTOTYPE_KEY_PLAN"; then
   printf '%s\n' "Prototype key rejection plan must be marked completed." >&2
   exit 1
@@ -239,8 +251,9 @@ if ! grep -Fq "OPENAI_API_KEY" "$README" ||
   ! grep -Fq "Content-Type: application/json" "$README" ||
   ! grep -Fq "npm test" "$README" ||
   ! grep -Fq "make check" "$README" ||
+  ! grep -Fq "clears the ignored .next directory" "$README" ||
   ! grep -Fq "whitespace-only message content" "$README"; then
-  printf '%s\n' "README must document API key, model allow-list, JSON content type, npm test, make check, and blank message handling." >&2
+  printf '%s\n' "README must document API key, model allow-list, JSON content type, npm test, make check, clean build behavior, and blank message handling." >&2
   exit 1
 fi
 
