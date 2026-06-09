@@ -9,6 +9,7 @@ README="$ROOT_DIR/README.md"
 PLAN="$ROOT_DIR/docs/plans/2026-06-08-docs-design-execute-api-baseline.md"
 CHECK_PLAN="$ROOT_DIR/docs/plans/2026-06-08-docs-design-check-wrapper.md"
 WHITESPACE_PLAN="$ROOT_DIR/docs/plans/2026-06-09-docs-design-whitespace-message-guard.md"
+MODEL_PLAN="$ROOT_DIR/docs/plans/2026-06-09-docs-design-model-allowlist-narrowing.md"
 
 require_file() {
   path=$1
@@ -28,6 +29,7 @@ for path in \
   "components/Editor.tsx" \
   "docs/plans/2026-06-08-docs-design-check-wrapper.md" \
   "docs/plans/2026-06-08-docs-design-execute-api-baseline.md" \
+  "docs/plans/2026-06-09-docs-design-model-allowlist-narrowing.md" \
   "docs/plans/2026-06-09-docs-design-whitespace-message-guard.md" \
   "scripts/test-execute-parser.ts" \
   "scripts/check-baseline.sh"; do
@@ -98,8 +100,19 @@ if ! grep -Fq "content.trim().length === 0" "$API"; then
   exit 1
 fi
 
+if ! grep -Fq "defaultAllowedModels.has(model)" "$API"; then
+  printf '%s\n' "OPENAI_ALLOWED_MODELS must only narrow the default model allow-list." >&2
+  exit 1
+fi
+
 if ! grep -Fq 'content: "   \\n\\t  "' "$ROOT_DIR/scripts/test-execute-parser.ts"; then
   printf '%s\n' "Parser tests must cover whitespace-only message content." >&2
+  exit 1
+fi
+
+if ! grep -Fq "process.env.OPENAI_ALLOWED_MODELS = \"gpt-4o-mini\"" "$ROOT_DIR/scripts/test-execute-parser.ts" ||
+  ! grep -Fq "process.env.OPENAI_ALLOWED_MODELS = \"docs-preview-model\"" "$ROOT_DIR/scripts/test-execute-parser.ts"; then
+  printf '%s\n' "Parser tests must cover model allow-list narrowing." >&2
   exit 1
 fi
 
@@ -133,12 +146,22 @@ if ! grep -Fq "make check" "$WHITESPACE_PLAN"; then
   exit 1
 fi
 
+if ! grep -Fq "status: completed" "$MODEL_PLAN"; then
+  printf '%s\n' "Model allow-list narrowing plan must be marked completed." >&2
+  exit 1
+fi
+
 if ! grep -Fq "OPENAI_API_KEY" "$README" ||
   ! grep -Fq "OPENAI_ALLOWED_MODELS" "$README" ||
   ! grep -Fq "npm test" "$README" ||
   ! grep -Fq "make check" "$README" ||
   ! grep -Fq "whitespace-only message content" "$README"; then
   printf '%s\n' "README must document OPENAI_API_KEY, OPENAI_ALLOWED_MODELS, npm test, make check, and blank message handling." >&2
+  exit 1
+fi
+
+if ! grep -Fq "can only narrow the checked-in default model allow-list" "$README"; then
+  printf '%s\n' "README must document model allow-list narrowing semantics." >&2
   exit 1
 fi
 

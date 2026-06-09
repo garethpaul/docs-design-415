@@ -139,17 +139,40 @@ assert.equal(
 );
 
 const originalAllowedModels = process.env.OPENAI_ALLOWED_MODELS;
-process.env.OPENAI_ALLOWED_MODELS = "docs-preview-model";
-
 try {
+  process.env.OPENAI_ALLOWED_MODELS = "gpt-4o-mini";
+  assert.equal(
+    parseAndNormalize(`
+      await openai.chat.completions.create({
+        model: "gpt-3.5-turbo",
+        messages: [{ role: "user", content: "Hello" }]
+      });
+    `),
+    null,
+  );
+  assert.deepEqual(
+    parseAndNormalize(`
+      await openai.chat.completions.create({
+        model: "gpt-4o-mini",
+        messages: [{ role: "user", content: "Hello" }]
+      });
+    `),
+    {
+      model: "gpt-4o-mini",
+      messages: [{ role: "user", content: "Hello" }],
+      max_tokens: 512,
+    },
+  );
+
+  process.env.OPENAI_ALLOWED_MODELS = "docs-preview-model";
   assert.equal(
     parseAndNormalize(`
       await openai.chat.completions.create({
         model: "docs-preview-model",
         messages: [{ role: "user", content: "Use configured model." }]
       });
-    `)?.model,
-    "docs-preview-model",
+    `),
+    null,
   );
 } finally {
   if (originalAllowedModels === undefined) {

@@ -2,6 +2,8 @@
 
 ## 2026-06-09
 
+- Constrained `OPENAI_ALLOWED_MODELS` so deployment configuration can only
+  narrow the checked-in execute API model allow-list.
 - Rejected whitespace-only message content in execute API parser validation and
   added a regression guard.
 
