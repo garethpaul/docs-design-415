@@ -4,6 +4,8 @@
 
 - Rejected non-finite numeric execute parameters before proxying OpenAI chat
   completion requests.
+- Required own execute request, parameter, and message fields before normalized
+  values are read.
 - Cleared ignored `.next` output before Webpack builds so repeated local checks
   do not reuse stale Next trace files.
 - Preserved extracted prototype keys as own fields so execute API parameter and

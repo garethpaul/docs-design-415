@@ -16,6 +16,7 @@ MESSAGE_FIELD_PLAN="$ROOT_DIR/docs/plans/2026-06-09-docs-design-message-field-al
 BODY_FIELD_PLAN="$ROOT_DIR/docs/plans/2026-06-09-docs-design-body-field-allowlist.md"
 PROTOTYPE_KEY_PLAN="$ROOT_DIR/docs/plans/2026-06-09-docs-design-prototype-key-rejection.md"
 FINITE_NUMERIC_PLAN="$ROOT_DIR/docs/plans/2026-06-09-docs-design-finite-numeric-parameter-validation.md"
+OWN_FIELD_PLAN="$ROOT_DIR/docs/plans/2026-06-09-docs-design-own-field-validation.md"
 
 require_file() {
   path=$1
@@ -42,6 +43,7 @@ for path in \
   "docs/plans/2026-06-09-docs-design-model-allowlist-narrowing.md" \
   "docs/plans/2026-06-09-docs-design-prototype-key-rejection.md" \
   "docs/plans/2026-06-09-docs-design-finite-numeric-parameter-validation.md" \
+  "docs/plans/2026-06-09-docs-design-own-field-validation.md" \
   "docs/plans/2026-06-09-docs-design-whitespace-message-guard.md" \
   "scripts/test-execute-parser.ts" \
   "scripts/check-baseline.sh"; do
@@ -130,6 +132,16 @@ if ! grep -Fq "Object.create(null) as JsonObject" "$API"; then
   exit 1
 fi
 
+if ! grep -Fq "function hasOwnJsonField" "$API" ||
+  ! grep -Fq 'hasOwnJsonField(payload, "code")' "$API" ||
+  ! grep -Fq 'hasOwnJsonField(params, "model")' "$API" ||
+  ! grep -Fq 'hasOwnJsonField(params, "messages")' "$API" ||
+  ! grep -Fq 'hasOwnJsonField(message, "role")' "$API" ||
+  ! grep -Fq 'hasOwnJsonField(message, "content")' "$API"; then
+  printf '%s\n' "execute API must require own request, parameter, and message fields before reading values." >&2
+  exit 1
+fi
+
 if ! grep -Fq "Request content type must be application/json" "$API"; then
   printf '%s\n' "execute API must reject non-JSON request content types." >&2
   exit 1
@@ -148,6 +160,13 @@ fi
 
 if ! grep -Fq 'apiKey: "secret"' "$ROOT_DIR/scripts/test-execute-parser.ts"; then
   printf '%s\n' "Parser tests must cover extra execute request body field rejection." >&2
+  exit 1
+fi
+
+if ! grep -Fq "Object.create({ code:" "$ROOT_DIR/scripts/test-execute-parser.ts" ||
+  ! grep -Fq "Inherited params" "$ROOT_DIR/scripts/test-execute-parser.ts" ||
+  ! grep -Fq "Inherited message" "$ROOT_DIR/scripts/test-execute-parser.ts"; then
+  printf '%s\n' "Parser tests must reject inherited execute body, parameter, and message fields." >&2
   exit 1
 fi
 
@@ -268,6 +287,16 @@ if ! grep -Fq "make check" "$FINITE_NUMERIC_PLAN"; then
   exit 1
 fi
 
+if ! grep -Fq "Status: Completed" "$OWN_FIELD_PLAN"; then
+  printf '%s\n' "Own field validation plan must be marked completed." >&2
+  exit 1
+fi
+
+if ! grep -Fq "make check" "$OWN_FIELD_PLAN"; then
+  printf '%s\n' "Own field validation plan must record make check verification." >&2
+  exit 1
+fi
+
 if ! grep -Fq "OPENAI_API_KEY" "$README" ||
   ! grep -Fq "OPENAI_ALLOWED_MODELS" "$README" ||
   ! grep -Fq "Content-Type: application/json" "$README" ||
@@ -304,6 +333,11 @@ fi
 
 if ! grep -Fq "finite numeric execute parameters" "$README"; then
   printf '%s\n' "README must document finite numeric execute parameter validation." >&2
+  exit 1
+fi
+
+if ! grep -Fq "own request, parameter, and message fields" "$README"; then
+  printf '%s\n' "README must document own-field execute API validation." >&2
   exit 1
 fi
 

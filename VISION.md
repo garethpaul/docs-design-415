@@ -34,6 +34,8 @@ Current baseline:
   accepted and then silently dropped.
 - Extracted literal objects preserve prototype keys as own fields before
   allow-list validation.
+- Execute request, parameter, and message normalization requires own fields
+  before reading accepted values.
 - Numeric execute parameters must be finite values before range checks pass.
 - Proxied requests require `OPENAI_API_KEY` and use `OPENAI_ALLOWED_MODELS`
   when maintainers need a narrower model allow-list. Environment configuration
