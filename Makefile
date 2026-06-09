@@ -1,6 +1,9 @@
-.PHONY: type-check parser test build audit verify check
+.PHONY: lint type-check parser test build audit verify check
 
 NPM ?= npm
+
+lint:
+	$(NPM) run check
 
 type-check:
 	$(NPM) run type-check

@@ -70,6 +70,7 @@ execute API:
 
 ```bash
 make check
+make lint
 npm test
 ```
 
@@ -77,9 +78,9 @@ npm test
 build, parser/validator regression tests through the source baseline guard,
 and `npm audit --audit-level=high`. The execute API requires `OPENAI_API_KEY`
 at runtime, accepts `Content-Type: application/json` requests only, and
-validates submitted examples before calling the OpenAI SDK. It rejects
-whitespace-only message content so blank prompts are not proxied. Chat message
-objects may only contain `role` and `content`.
+validates submitted examples before calling the OpenAI SDK. Request bodies may only contain a `code` string. It rejects whitespace-only message content so
+blank prompts are not proxied. Chat message objects may only contain `role` and
+`content`.
 
 When the required SDK or runtime is unavailable, use static checks and source review first, then verify on a machine that has the matching platform toolchain.
 
@@ -94,6 +95,8 @@ When the required SDK or runtime is unavailable, use static checks and source re
   accepts the checked-in defaults.
 - Submitted chat messages are normalized to `role` and `content` only; message
   metadata fields are rejected instead of silently dropped.
+- Execute API request bodies are limited to the `code` field; extra fields such
+  as credentials or metadata are rejected before code parsing.
 
 ## Security and Privacy Notes
 
@@ -116,6 +119,8 @@ When the required SDK or runtime is unavailable, use static checks and source re
   execute API JSON request boundary.
 - See `docs/plans/2026-06-09-docs-design-message-field-allowlist.md` for the
   execute API message field allow-list.
+- See `docs/plans/2026-06-09-docs-design-body-field-allowlist.md` for the
+  execute API body field allow-list.
 
 ## Contributing
 

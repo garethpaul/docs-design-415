@@ -12,6 +12,7 @@ WHITESPACE_PLAN="$ROOT_DIR/docs/plans/2026-06-09-docs-design-whitespace-message-
 MODEL_PLAN="$ROOT_DIR/docs/plans/2026-06-09-docs-design-model-allowlist-narrowing.md"
 CONTENT_TYPE_PLAN="$ROOT_DIR/docs/plans/2026-06-09-docs-design-json-content-type-guard.md"
 MESSAGE_FIELD_PLAN="$ROOT_DIR/docs/plans/2026-06-09-docs-design-message-field-allowlist.md"
+BODY_FIELD_PLAN="$ROOT_DIR/docs/plans/2026-06-09-docs-design-body-field-allowlist.md"
 
 require_file() {
   path=$1
@@ -32,6 +33,7 @@ for path in \
   "docs/plans/2026-06-08-docs-design-check-wrapper.md" \
   "docs/plans/2026-06-08-docs-design-execute-api-baseline.md" \
   "docs/plans/2026-06-09-docs-design-json-content-type-guard.md" \
+  "docs/plans/2026-06-09-docs-design-body-field-allowlist.md" \
   "docs/plans/2026-06-09-docs-design-message-field-allowlist.md" \
   "docs/plans/2026-06-09-docs-design-model-allowlist-narrowing.md" \
   "docs/plans/2026-06-09-docs-design-whitespace-message-guard.md" \
@@ -91,6 +93,7 @@ for required in \
   "normalizeChatRequest" \
   "OPENAI_API_KEY" \
   "OPENAI_ALLOWED_MODELS" \
+  "ALLOWED_BODY_FIELDS" \
   "ALLOWED_MESSAGE_ROLES" \
   "ALLOWED_MESSAGE_FIELDS" \
   "ALLOWED_PARAMETER_NAMES" \
@@ -116,8 +119,19 @@ if ! grep -Fq "Request content type must be application/json" "$API"; then
   exit 1
 fi
 
+if ! grep -Fq "normalizeExecuteBody" "$API" ||
+  ! grep -Fq "Request body must include only a code string" "$API"; then
+  printf '%s\n' "execute API must validate request body fields before parsing code." >&2
+  exit 1
+fi
+
 if ! grep -Fq 'content: "   \\n\\t  "' "$ROOT_DIR/scripts/test-execute-parser.ts"; then
   printf '%s\n' "Parser tests must cover whitespace-only message content." >&2
+  exit 1
+fi
+
+if ! grep -Fq 'apiKey: "secret"' "$ROOT_DIR/scripts/test-execute-parser.ts"; then
+  printf '%s\n' "Parser tests must cover extra execute request body field rejection." >&2
   exit 1
 fi
 
@@ -183,6 +197,16 @@ if ! grep -Fq "status: completed" "$MESSAGE_FIELD_PLAN"; then
   exit 1
 fi
 
+if ! grep -Fq "status: completed" "$BODY_FIELD_PLAN"; then
+  printf '%s\n' "Execute body field allow-list plan must be marked completed." >&2
+  exit 1
+fi
+
+if ! grep -Fq "make check" "$BODY_FIELD_PLAN"; then
+  printf '%s\n' "Execute body field allow-list plan must record make check verification." >&2
+  exit 1
+fi
+
 if ! grep -Fq "make check" "$MESSAGE_FIELD_PLAN"; then
   printf '%s\n' "Message field allow-list plan must record make check verification." >&2
   exit 1
@@ -195,6 +219,12 @@ if ! grep -Fq "OPENAI_API_KEY" "$README" ||
   ! grep -Fq "make check" "$README" ||
   ! grep -Fq "whitespace-only message content" "$README"; then
   printf '%s\n' "README must document API key, model allow-list, JSON content type, npm test, make check, and blank message handling." >&2
+  exit 1
+fi
+
+if ! grep -Fq "Request bodies may only contain" "$README" ||
+  ! grep -Fq "body field allow-list" "$README"; then
+  printf '%s\n' "README must document the execute body field allow-list." >&2
   exit 1
 fi
 
@@ -212,6 +242,11 @@ fi
 
 if ! grep -Fq "check: verify" "$ROOT_DIR/Makefile"; then
   printf '%s\n' "Makefile must expose make check as the repository verification wrapper." >&2
+  exit 1
+fi
+
+if ! grep -Fq "lint:" "$ROOT_DIR/Makefile"; then
+  printf '%s\n' "Makefile must expose make lint for the source baseline guard." >&2
   exit 1
 fi
 
