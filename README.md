@@ -76,8 +76,9 @@ npm test
 `make check` delegates to `npm test`, which runs TypeScript checks, the Next
 build, parser/validator regression tests through the source baseline guard,
 and `npm audit --audit-level=high`. The execute API requires `OPENAI_API_KEY`
-at runtime and validates submitted examples before calling the OpenAI SDK.
-It rejects whitespace-only message content so blank prompts are not proxied.
+at runtime, accepts `Content-Type: application/json` requests only, and
+validates submitted examples before calling the OpenAI SDK. It rejects
+whitespace-only message content so blank prompts are not proxied.
 
 When the required SDK or runtime is unavailable, use static checks and source review first, then verify on a machine that has the matching platform toolchain.
 
@@ -108,6 +109,8 @@ When the required SDK or runtime is unavailable, use static checks and source re
   whitespace-only message content guard.
 - See `docs/plans/2026-06-09-docs-design-model-allowlist-narrowing.md` for
   model allow-list narrowing semantics.
+- See `docs/plans/2026-06-09-docs-design-json-content-type-guard.md` for the
+  execute API JSON request boundary.
 
 ## Contributing
 
