@@ -17,13 +17,14 @@ This README is based on the checked-in source, manifests, scripts, and repositor
 - `package-lock.json` - JavaScript dependency and script metadata
 - `pages` - source or example code
 - `SECURITY.md` - security reporting and disclosure guidance
+- `Makefile` - repository-level verification wrapper
 - `VISION.md` - project direction and maintenance guardrails
 
 Additional scan context:
 
 - Source directories: components, pages
 - Dependency and build manifests: package-lock.json, package.json
-- Entry points or build surfaces: package.json
+- Entry points or build surfaces: package.json, Makefile
 - Test-looking files: no obvious test files detected
 
 ## Getting Started
@@ -68,13 +69,14 @@ Run the local verification gate before changing the editor, docs route, or
 execute API:
 
 ```bash
+make check
 npm test
 ```
 
-`npm test` runs TypeScript checks, the Next build, parser/validator regression
-tests through the source baseline guard, and `npm audit --audit-level=high`.
-The execute API requires `OPENAI_API_KEY` at runtime and validates submitted
-examples before calling the OpenAI SDK.
+`make check` delegates to `npm test`, which runs TypeScript checks, the Next
+build, parser/validator regression tests through the source baseline guard,
+and `npm audit --audit-level=high`. The execute API requires `OPENAI_API_KEY`
+at runtime and validates submitted examples before calling the OpenAI SDK.
 
 When the required SDK or runtime is unavailable, use static checks and source review first, then verify on a machine that has the matching platform toolchain.
 
