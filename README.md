@@ -100,6 +100,8 @@ When the required SDK or runtime is unavailable, use static checks and source re
   as credentials or metadata are rejected before code parsing.
 - Extracted parameter and message objects preserve prototype-pollution keys as
   own fields so the allow-lists reject them.
+- Numeric execute parameters must be finite numbers within their checked range;
+  non-finite values are rejected before proxying.
 
 ## Security and Privacy Notes
 
@@ -128,6 +130,8 @@ When the required SDK or runtime is unavailable, use static checks and source re
   execute API body field allow-list.
 - See `docs/plans/2026-06-09-docs-design-prototype-key-rejection.md` for
   prototype key rejection in extracted execute API objects.
+- See `docs/plans/2026-06-09-docs-design-finite-numeric-parameter-validation.md`
+  for finite numeric execute parameters.
 
 ## Contributing
 

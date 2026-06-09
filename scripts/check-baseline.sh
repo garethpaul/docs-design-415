@@ -15,6 +15,7 @@ BUILD_CACHE_PLAN="$ROOT_DIR/docs/plans/2026-06-09-docs-design-clean-next-build.m
 MESSAGE_FIELD_PLAN="$ROOT_DIR/docs/plans/2026-06-09-docs-design-message-field-allowlist.md"
 BODY_FIELD_PLAN="$ROOT_DIR/docs/plans/2026-06-09-docs-design-body-field-allowlist.md"
 PROTOTYPE_KEY_PLAN="$ROOT_DIR/docs/plans/2026-06-09-docs-design-prototype-key-rejection.md"
+FINITE_NUMERIC_PLAN="$ROOT_DIR/docs/plans/2026-06-09-docs-design-finite-numeric-parameter-validation.md"
 
 require_file() {
   path=$1
@@ -40,6 +41,7 @@ for path in \
   "docs/plans/2026-06-09-docs-design-message-field-allowlist.md" \
   "docs/plans/2026-06-09-docs-design-model-allowlist-narrowing.md" \
   "docs/plans/2026-06-09-docs-design-prototype-key-rejection.md" \
+  "docs/plans/2026-06-09-docs-design-finite-numeric-parameter-validation.md" \
   "docs/plans/2026-06-09-docs-design-whitespace-message-guard.md" \
   "scripts/test-execute-parser.ts" \
   "scripts/check-baseline.sh"; do
@@ -118,6 +120,11 @@ if ! grep -Fq "defaultAllowedModels.has(model)" "$API"; then
   exit 1
 fi
 
+if ! grep -Fq "Number.isFinite(value)" "$API"; then
+  printf '%s\n' "Execute numeric parameters must reject non-finite values." >&2
+  exit 1
+fi
+
 if ! grep -Fq "Object.create(null) as JsonObject" "$API"; then
   printf '%s\n' "execute API must preserve prototype keys as own fields during extraction." >&2
   exit 1
@@ -151,6 +158,11 @@ fi
 
 if [ "$(grep -Fc '"__proto__": { polluted: true }' "$ROOT_DIR/scripts/test-execute-parser.ts")" -lt 2 ]; then
   printf '%s\n' "Parser tests must reject prototype-pollution keys in params and messages." >&2
+  exit 1
+fi
+
+if ! grep -Fq "temperature: 1e309" "$ROOT_DIR/scripts/test-execute-parser.ts"; then
+  printf '%s\n' "Parser tests must reject non-finite numeric parameters." >&2
   exit 1
 fi
 
@@ -246,6 +258,16 @@ if ! grep -Fq "make check" "$PROTOTYPE_KEY_PLAN"; then
   exit 1
 fi
 
+if ! grep -Fq "Status: Completed" "$FINITE_NUMERIC_PLAN"; then
+  printf '%s\n' "Finite numeric parameter validation plan must be marked completed." >&2
+  exit 1
+fi
+
+if ! grep -Fq "make check" "$FINITE_NUMERIC_PLAN"; then
+  printf '%s\n' "Finite numeric parameter validation plan must record make check verification." >&2
+  exit 1
+fi
+
 if ! grep -Fq "OPENAI_API_KEY" "$README" ||
   ! grep -Fq "OPENAI_ALLOWED_MODELS" "$README" ||
   ! grep -Fq "Content-Type: application/json" "$README" ||
@@ -277,6 +299,11 @@ fi
 
 if ! grep -Fq "prototype-pollution keys" "$README"; then
   printf '%s\n' "README must document prototype key rejection." >&2
+  exit 1
+fi
+
+if ! grep -Fq "finite numeric execute parameters" "$README"; then
+  printf '%s\n' "README must document finite numeric execute parameter validation." >&2
   exit 1
 fi
 

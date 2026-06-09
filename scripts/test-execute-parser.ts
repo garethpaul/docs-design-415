@@ -184,6 +184,17 @@ assert.equal(
   null,
 );
 
+assert.equal(
+  parseAndNormalize(`
+    await openai.chat.completions.create({
+      model: "gpt-4o-mini",
+      messages: [{ role: "user", content: "Hello" }],
+      temperature: 1e309
+    });
+  `),
+  null,
+);
+
 const originalAllowedModels = process.env.OPENAI_ALLOWED_MODELS;
 try {
   process.env.OPENAI_ALLOWED_MODELS = "gpt-4o-mini";
