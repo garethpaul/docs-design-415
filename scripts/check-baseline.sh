@@ -11,6 +11,7 @@ CHECK_PLAN="$ROOT_DIR/docs/plans/2026-06-08-docs-design-check-wrapper.md"
 WHITESPACE_PLAN="$ROOT_DIR/docs/plans/2026-06-09-docs-design-whitespace-message-guard.md"
 MODEL_PLAN="$ROOT_DIR/docs/plans/2026-06-09-docs-design-model-allowlist-narrowing.md"
 CONTENT_TYPE_PLAN="$ROOT_DIR/docs/plans/2026-06-09-docs-design-json-content-type-guard.md"
+MESSAGE_FIELD_PLAN="$ROOT_DIR/docs/plans/2026-06-09-docs-design-message-field-allowlist.md"
 
 require_file() {
   path=$1
@@ -31,6 +32,7 @@ for path in \
   "docs/plans/2026-06-08-docs-design-check-wrapper.md" \
   "docs/plans/2026-06-08-docs-design-execute-api-baseline.md" \
   "docs/plans/2026-06-09-docs-design-json-content-type-guard.md" \
+  "docs/plans/2026-06-09-docs-design-message-field-allowlist.md" \
   "docs/plans/2026-06-09-docs-design-model-allowlist-narrowing.md" \
   "docs/plans/2026-06-09-docs-design-whitespace-message-guard.md" \
   "scripts/test-execute-parser.ts" \
@@ -90,6 +92,7 @@ for required in \
   "OPENAI_API_KEY" \
   "OPENAI_ALLOWED_MODELS" \
   "ALLOWED_MESSAGE_ROLES" \
+  "ALLOWED_MESSAGE_FIELDS" \
   "ALLOWED_PARAMETER_NAMES" \
   "DEFAULT_ALLOWED_MODELS"; do
   if ! grep -Fq "$required" "$API"; then
@@ -115,6 +118,11 @@ fi
 
 if ! grep -Fq 'content: "   \\n\\t  "' "$ROOT_DIR/scripts/test-execute-parser.ts"; then
   printf '%s\n' "Parser tests must cover whitespace-only message content." >&2
+  exit 1
+fi
+
+if ! grep -Fq 'name: "sample-user"' "$ROOT_DIR/scripts/test-execute-parser.ts"; then
+  printf '%s\n' "Parser tests must cover extra chat message field rejection." >&2
   exit 1
 fi
 
@@ -170,6 +178,16 @@ if ! grep -Fq "status: completed" "$CONTENT_TYPE_PLAN"; then
   exit 1
 fi
 
+if ! grep -Fq "status: completed" "$MESSAGE_FIELD_PLAN"; then
+  printf '%s\n' "Message field allow-list plan must be marked completed." >&2
+  exit 1
+fi
+
+if ! grep -Fq "make check" "$MESSAGE_FIELD_PLAN"; then
+  printf '%s\n' "Message field allow-list plan must record make check verification." >&2
+  exit 1
+fi
+
 if ! grep -Fq "OPENAI_API_KEY" "$README" ||
   ! grep -Fq "OPENAI_ALLOWED_MODELS" "$README" ||
   ! grep -Fq "Content-Type: application/json" "$README" ||
@@ -182,6 +200,13 @@ fi
 
 if ! grep -Fq "can only narrow the checked-in default model allow-list" "$README"; then
   printf '%s\n' "README must document model allow-list narrowing semantics." >&2
+  exit 1
+fi
+
+if ! grep -Fq "objects may only contain" "$README" ||
+  ! grep -Fq "Submitted chat messages are normalized" "$README" ||
+  ! grep -Fq "message field allow-list" "$README"; then
+  printf '%s\n' "README must document the message field allow-list." >&2
   exit 1
 fi
 
