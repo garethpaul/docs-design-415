@@ -13,6 +13,7 @@ MODEL_PLAN="$ROOT_DIR/docs/plans/2026-06-09-docs-design-model-allowlist-narrowin
 CONTENT_TYPE_PLAN="$ROOT_DIR/docs/plans/2026-06-09-docs-design-json-content-type-guard.md"
 MESSAGE_FIELD_PLAN="$ROOT_DIR/docs/plans/2026-06-09-docs-design-message-field-allowlist.md"
 BODY_FIELD_PLAN="$ROOT_DIR/docs/plans/2026-06-09-docs-design-body-field-allowlist.md"
+PROTOTYPE_KEY_PLAN="$ROOT_DIR/docs/plans/2026-06-09-docs-design-prototype-key-rejection.md"
 
 require_file() {
   path=$1
@@ -36,6 +37,7 @@ for path in \
   "docs/plans/2026-06-09-docs-design-body-field-allowlist.md" \
   "docs/plans/2026-06-09-docs-design-message-field-allowlist.md" \
   "docs/plans/2026-06-09-docs-design-model-allowlist-narrowing.md" \
+  "docs/plans/2026-06-09-docs-design-prototype-key-rejection.md" \
   "docs/plans/2026-06-09-docs-design-whitespace-message-guard.md" \
   "scripts/test-execute-parser.ts" \
   "scripts/check-baseline.sh"; do
@@ -114,6 +116,11 @@ if ! grep -Fq "defaultAllowedModels.has(model)" "$API"; then
   exit 1
 fi
 
+if ! grep -Fq "Object.create(null) as JsonObject" "$API"; then
+  printf '%s\n' "execute API must preserve prototype keys as own fields during extraction." >&2
+  exit 1
+fi
+
 if ! grep -Fq "Request content type must be application/json" "$API"; then
   printf '%s\n' "execute API must reject non-JSON request content types." >&2
   exit 1
@@ -137,6 +144,11 @@ fi
 
 if ! grep -Fq 'name: "sample-user"' "$ROOT_DIR/scripts/test-execute-parser.ts"; then
   printf '%s\n' "Parser tests must cover extra chat message field rejection." >&2
+  exit 1
+fi
+
+if [ "$(grep -Fc '"__proto__": { polluted: true }' "$ROOT_DIR/scripts/test-execute-parser.ts")" -lt 2 ]; then
+  printf '%s\n' "Parser tests must reject prototype-pollution keys in params and messages." >&2
   exit 1
 fi
 
@@ -212,6 +224,16 @@ if ! grep -Fq "make check" "$MESSAGE_FIELD_PLAN"; then
   exit 1
 fi
 
+if ! grep -Fq "Status: Completed" "$PROTOTYPE_KEY_PLAN"; then
+  printf '%s\n' "Prototype key rejection plan must be marked completed." >&2
+  exit 1
+fi
+
+if ! grep -Fq "make check" "$PROTOTYPE_KEY_PLAN"; then
+  printf '%s\n' "Prototype key rejection plan must record make check verification." >&2
+  exit 1
+fi
+
 if ! grep -Fq "OPENAI_API_KEY" "$README" ||
   ! grep -Fq "OPENAI_ALLOWED_MODELS" "$README" ||
   ! grep -Fq "Content-Type: application/json" "$README" ||
@@ -237,6 +259,11 @@ if ! grep -Fq "objects may only contain" "$README" ||
   ! grep -Fq "Submitted chat messages are normalized" "$README" ||
   ! grep -Fq "message field allow-list" "$README"; then
   printf '%s\n' "README must document the message field allow-list." >&2
+  exit 1
+fi
+
+if ! grep -Fq "prototype-pollution keys" "$README"; then
+  printf '%s\n' "README must document prototype key rejection." >&2
   exit 1
 fi
 
