@@ -22,6 +22,7 @@ Priority:
 - Keep `npm run dev`, `npm run build`, `npm run type-check`, and `npm test`
   meaningful
 - Keep repeated Webpack builds free of stale `.next` trace state
+- Keep GitHub Actions aligned with the local npm `make check` baseline
 - Avoid committing API keys or proxy secrets
 - Keep visual changes tied to the docs onboarding purpose
 
@@ -57,6 +58,8 @@ Contribution rules:
 - Run `npm test` before pushing code changes.
 - Update screenshots or README notes when the visible docs flow changes.
 - Keep secrets in environment configuration.
+- Keep `.github/workflows/check.yml` in sync with the local npm verification
+  gate.
 
 ## Security
 

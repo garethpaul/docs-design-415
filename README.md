@@ -54,7 +54,7 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
 
 Detected npm scripts:
 
-- `npm run audit` - `npm audit --audit-level=high`
+- `npm run audit` - `npm audit --audit-level=moderate`
 - `npm run build` - `node node_modules/next/dist/bin/next build --webpack`
 - `npm run check` - `scripts/check-baseline.sh`
 - `npm run dev` - `node node_modules/next/dist/bin/next dev`
@@ -76,12 +76,16 @@ npm test
 
 `make check` delegates to `npm test`, which runs TypeScript checks, the Next
 build, parser/validator regression tests through the source baseline guard,
-and `npm audit --audit-level=high`. The execute API requires `OPENAI_API_KEY`
+and `npm audit --audit-level=moderate`. The execute API requires `OPENAI_API_KEY`
 at runtime, accepts `Content-Type: application/json` requests only, and
 validates submitted examples before calling the OpenAI SDK. Request bodies may only contain a `code` string. It rejects whitespace-only message content so
 blank prompts are not proxied. Chat message objects may only contain `role` and
 `content`. The build script clears the ignored .next directory before invoking
 the Webpack-backed Next build so repeated local checks do not reuse stale traces.
+GitHub Actions runs clean `npm ci` installs and `make check` on Node 20, 22,
+and 24 for pushes, pull requests, and manual dispatches. The workflow pins its
+third-party actions, grants read-only repository access, and bounds each job to
+15 minutes.
 
 When the required SDK or runtime is unavailable, use static checks and source review first, then verify on a machine that has the matching platform toolchain.
 
@@ -136,6 +140,8 @@ When the required SDK or runtime is unavailable, use static checks and source re
   for finite numeric execute parameters.
 - See `docs/plans/2026-06-09-docs-design-own-field-validation.md` for own
   request, parameter, and message field validation.
+- See `docs/plans/2026-06-10-ci-baseline.md` for the hosted GitHub Actions
+  baseline.
 
 ## Contributing
 

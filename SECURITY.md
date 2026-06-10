@@ -31,6 +31,10 @@ Helpful reports include:
 - Review found file, document, data, or media parsing flows; changes in those areas should receive security-focused review before merge.
 - Review found database, model, query, or persistence-related code; changes in those areas should receive security-focused review before merge.
 - Dependency manifests detected: package.json, package-lock.json. Dependency updates should preserve lockfiles when present and avoid introducing packages without a clear maintenance reason.
+- GitHub Actions runs `make check` after clean installs on Node 20, 22, and 24
+  for pushes, pull requests, and manual dispatches. Actions are pinned by
+  commit, workflow access is read-only, and the audit gate includes
+  moderate-severity findings.
 
 ## Service and API Notes
 

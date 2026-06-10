@@ -17,6 +17,8 @@ BODY_FIELD_PLAN="$ROOT_DIR/docs/plans/2026-06-09-docs-design-body-field-allowlis
 PROTOTYPE_KEY_PLAN="$ROOT_DIR/docs/plans/2026-06-09-docs-design-prototype-key-rejection.md"
 FINITE_NUMERIC_PLAN="$ROOT_DIR/docs/plans/2026-06-09-docs-design-finite-numeric-parameter-validation.md"
 OWN_FIELD_PLAN="$ROOT_DIR/docs/plans/2026-06-09-docs-design-own-field-validation.md"
+CI_PLAN="$ROOT_DIR/docs/plans/2026-06-10-ci-baseline.md"
+CI_WORKFLOW="$ROOT_DIR/.github/workflows/check.yml"
 
 require_file() {
   path=$1
@@ -28,6 +30,7 @@ require_file() {
 
 for path in \
   "README.md" \
+  ".github/workflows/check.yml" \
   "CHANGES.md" \
   "Makefile" \
   "package.json" \
@@ -45,10 +48,26 @@ for path in \
   "docs/plans/2026-06-09-docs-design-finite-numeric-parameter-validation.md" \
   "docs/plans/2026-06-09-docs-design-own-field-validation.md" \
   "docs/plans/2026-06-09-docs-design-whitespace-message-guard.md" \
+  "docs/plans/2026-06-10-ci-baseline.md" \
   "scripts/test-execute-parser.ts" \
   "scripts/check-baseline.sh"; do
   require_file "$path"
 done
+
+if ! grep -Fq "actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10" "$CI_WORKFLOW" ||
+  ! grep -Fq "actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e" "$CI_WORKFLOW" ||
+  ! grep -Fq "node-version: [20, 22, 24]" "$CI_WORKFLOW" ||
+  ! grep -Fq "run: npm ci" "$CI_WORKFLOW" ||
+  ! grep -Fq "run: make check" "$CI_WORKFLOW"; then
+  printf '%s\n' "GitHub Actions workflow must pin actions and run make check across supported Node releases." >&2
+  exit 1
+fi
+
+if ! grep -Fq "permissions:" "$CI_WORKFLOW" || ! grep -Fq "contents: read" "$CI_WORKFLOW" ||
+  ! grep -Fq "workflow_dispatch:" "$CI_WORKFLOW" || ! grep -Fq "timeout-minutes: 15" "$CI_WORKFLOW"; then
+  printf '%s\n' "GitHub Actions workflow must be read-only and support bounded manual verification." >&2
+  exit 1
+fi
 
 node - "$PACKAGE_JSON" <<'NODE'
 const fs = require("fs");
@@ -78,6 +97,20 @@ if (!pkg.overrides || pkg.overrides.postcss !== "8.5.10") {
 }
 if (pkg.overrides["@babel/runtime"] !== "7.29.7" || pkg.overrides["form-data"] !== "4.0.5") {
   throw new Error("package.json must override vulnerable transitive parser/API dependencies");
+}
+for (const [name, version] of Object.entries({
+  next: "16.2.9",
+  openai: "6.42.0",
+  react: "19.2.7",
+  "react-dom": "19.2.7",
+  "@codemirror/lint": "6.9.7",
+})) {
+  if (pkg.dependencies?.[name] !== version) {
+    throw new Error(`package.json must pin ${name} ${version}`);
+  }
+}
+if (pkg.scripts.audit !== "npm audit --audit-level=moderate") {
+  throw new Error("package.json must keep the moderate-severity audit gate");
 }
 NODE
 
@@ -297,14 +330,29 @@ if ! grep -Fq "make check" "$OWN_FIELD_PLAN"; then
   exit 1
 fi
 
+if ! grep -Fq "Status: Completed" "$CI_PLAN" ||
+  ! grep -Fq "make check" "$CI_PLAN"; then
+  printf '%s\n' "CI baseline plan must be completed and record make check verification." >&2
+  exit 1
+fi
+
 if ! grep -Fq "OPENAI_API_KEY" "$README" ||
   ! grep -Fq "OPENAI_ALLOWED_MODELS" "$README" ||
   ! grep -Fq "Content-Type: application/json" "$README" ||
   ! grep -Fq "npm test" "$README" ||
   ! grep -Fq "make check" "$README" ||
+  ! grep -Fq "GitHub Actions" "$README" ||
+  ! grep -Fq "docs/plans/2026-06-10-ci-baseline.md" "$README" ||
   ! grep -Fq "clears the ignored .next directory" "$README" ||
   ! grep -Fq "whitespace-only message content" "$README"; then
   printf '%s\n' "README must document API key, model allow-list, JSON content type, npm test, make check, clean build behavior, and blank message handling." >&2
+  exit 1
+fi
+
+if ! grep -Fq "GitHub Actions" "$ROOT_DIR/VISION.md" ||
+  ! grep -Fq "GitHub Actions" "$ROOT_DIR/SECURITY.md" ||
+  ! grep -Fq "GitHub Actions" "$ROOT_DIR/CHANGES.md"; then
+  printf '%s\n' "Project docs must record the GitHub Actions CI baseline." >&2
   exit 1
 fi
 
