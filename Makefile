@@ -1,24 +1,25 @@
 .PHONY: lint type-check parser test build audit verify check
 
+ROOT := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
 NPM ?= npm
 
 lint:
-	$(NPM) run check
+	$(NPM) --prefix $(ROOT) run check
 
 type-check:
-	$(NPM) run type-check
+	$(NPM) --prefix $(ROOT) run type-check
 
 parser:
-	$(NPM) run test:parser
+	$(NPM) --prefix $(ROOT) run test:parser
 
 test:
-	$(NPM) test
+	$(NPM) --prefix $(ROOT) test
 
 build:
-	$(NPM) run build
+	$(NPM) --prefix $(ROOT) run build
 
 audit:
-	$(NPM) audit --audit-level=moderate
+	$(NPM) --prefix $(ROOT) audit --audit-level=moderate
 
 verify: test
 

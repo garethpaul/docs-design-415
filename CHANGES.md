@@ -2,6 +2,9 @@
 
 ## 2026-06-10
 
+- Added an explicit, default-off `DOCS_EXECUTE_ENABLED=true` deployment gate
+  before the spend-capable OpenAI proxy can run.
+- Rooted all Make targets and pinned CI to Ubuntu 24.04.
 - Added a GitHub Actions workflow that runs clean installs and `make check` on
   Node 20, 22, and 24 for pushes, pull requests, and manual dispatches.
 - Pinned GitHub Actions by commit, restricted workflow permissions to read-only,

@@ -41,6 +41,8 @@ git clone https://github.com/garethpaul/docs-design-415.git
 cd docs-design-415
 npm ci
 export OPENAI_API_KEY=sk-...
+# Explicitly enable the spend-capable execute route for local testing.
+export DOCS_EXECUTE_ENABLED=true
 # Optional: comma-separated allow-list for proxied chat models.
 export OPENAI_ALLOWED_MODELS=gpt-4o-mini,gpt-3.5-turbo
 ```
@@ -76,14 +78,15 @@ npm test
 
 `make check` delegates to `npm test`, which runs TypeScript checks, the Next
 build, parser/validator regression tests through the source baseline guard,
-and `npm audit --audit-level=moderate`. The execute API requires `OPENAI_API_KEY`
-at runtime, accepts `Content-Type: application/json` requests only, and
+and `npm audit --audit-level=moderate`. The execute API remains disabled unless
+`DOCS_EXECUTE_ENABLED=true` and requires `OPENAI_API_KEY` at runtime. It accepts
+`Content-Type: application/json` requests only and
 validates submitted examples before calling the OpenAI SDK. Request bodies may only contain a `code` string. It rejects whitespace-only message content so
 blank prompts are not proxied. Chat message objects may only contain `role` and
 `content`. The build script clears the ignored .next directory before invoking
 the Webpack-backed Next build so repeated local checks do not reuse stale traces.
 GitHub Actions runs clean `npm ci` installs and `make check` on Node 20, 22,
-and 24 for pushes, pull requests, and manual dispatches. The workflow pins its
+and 24 on Ubuntu 24.04 for pushes, pull requests, and manual dispatches. The workflow pins its
 third-party actions, grants read-only repository access, and bounds each job to
 15 minutes.
 
@@ -94,6 +97,10 @@ When the required SDK or runtime is unavailable, use static checks and source re
 - Detected references to OpenAI. Keep API keys, OAuth credentials, tokens, and account-specific values in local configuration only.
 - `OPENAI_API_KEY` must be provided through the environment. Do not commit
   OpenAI keys or sample outputs containing private prompt data.
+- `DOCS_EXECUTE_ENABLED` must be exactly `true` after whitespace and case
+  normalization before the spend-capable route is active. This is a deployment
+  safety interlock, not authentication; public deployments still require an
+  upstream authentication and rate-limiting layer.
 - `OPENAI_ALLOWED_MODELS` can narrow the comma-separated chat model allow-list.
   It can only narrow the checked-in default model allow-list; unsupported
   values are not allowed to expand the proxy. When unset, the execute API only
@@ -142,6 +149,8 @@ When the required SDK or runtime is unavailable, use static checks and source re
   request, parameter, and message field validation.
 - See `docs/plans/2026-06-10-ci-baseline.md` for the hosted GitHub Actions
   baseline.
+- See `docs/plans/2026-06-10-docs-design-execute-enable-gate.md` for the
+  explicit execute-route deployment interlock.
 
 ## Contributing
 
