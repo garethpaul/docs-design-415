@@ -5,6 +5,15 @@ ROOT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
 PACKAGE_JSON="$ROOT_DIR/package.json"
 API="$ROOT_DIR/pages/api/execute/code.ts"
 EDITOR="$ROOT_DIR/components/Editor.tsx"
+DOCS_PAGE="$ROOT_DIR/pages/docs.tsx"
+DOCS_STYLE="$ROOT_DIR/pages/DocsPage.module.css"
+SPLIT_STYLE="$ROOT_DIR/components/SplitFlexComponent.module.css"
+NAV_STYLE="$ROOT_DIR/components/Navigation.module.css"
+SIDEBAR_SOURCE="$ROOT_DIR/components/Sidebar.tsx"
+SIDEBAR_STYLE="$ROOT_DIR/components/Sidebar.module.css"
+LANGUAGE_SOURCE="$ROOT_DIR/components/LanguageButton.tsx"
+LANGUAGE_STYLE="$ROOT_DIR/components/LanguageButton.module.css"
+CTA_STYLE="$ROOT_DIR/components/CTAButton.module.css"
 README="$ROOT_DIR/README.md"
 PLAN="$ROOT_DIR/docs/plans/2026-06-08-docs-design-execute-api-baseline.md"
 CHECK_PLAN="$ROOT_DIR/docs/plans/2026-06-08-docs-design-check-wrapper.md"
@@ -19,6 +28,7 @@ FINITE_NUMERIC_PLAN="$ROOT_DIR/docs/plans/2026-06-09-docs-design-finite-numeric-
 OWN_FIELD_PLAN="$ROOT_DIR/docs/plans/2026-06-09-docs-design-own-field-validation.md"
 CI_PLAN="$ROOT_DIR/docs/plans/2026-06-10-ci-baseline.md"
 EXECUTE_ENABLE_PLAN="$ROOT_DIR/docs/plans/2026-06-10-docs-design-execute-enable-gate.md"
+RESPONSIVE_DOCS_PLAN="$ROOT_DIR/docs/plans/2026-06-12-responsive-docs-workspace.md"
 CI_WORKFLOW="$ROOT_DIR/.github/workflows/check.yml"
 MAKEFILE="$ROOT_DIR/Makefile"
 
@@ -38,7 +48,16 @@ for path in \
   "package.json" \
   "package-lock.json" \
   "pages/api/execute/code.ts" \
+  "pages/docs.tsx" \
+  "pages/DocsPage.module.css" \
   "components/Editor.tsx" \
+  "components/Navigation.module.css" \
+  "components/Sidebar.tsx" \
+  "components/Sidebar.module.css" \
+  "components/SplitFlexComponent.module.css" \
+  "components/LanguageButton.tsx" \
+  "components/LanguageButton.module.css" \
+  "components/CTAButton.module.css" \
   "docs/plans/2026-06-08-docs-design-check-wrapper.md" \
   "docs/plans/2026-06-08-docs-design-execute-api-baseline.md" \
   "docs/plans/2026-06-09-docs-design-clean-next-build.md" \
@@ -52,6 +71,7 @@ for path in \
   "docs/plans/2026-06-09-docs-design-whitespace-message-guard.md" \
   "docs/plans/2026-06-10-ci-baseline.md" \
   "docs/plans/2026-06-10-docs-design-execute-enable-gate.md" \
+  "docs/plans/2026-06-12-responsive-docs-workspace.md" \
   "scripts/test-execute-parser.ts" \
   "scripts/check-baseline.sh"; do
   require_file "$path"
@@ -267,6 +287,30 @@ if ! grep -Fq "body: JSON.stringify({ code: codeContent })" "$EDITOR"; then
   exit 1
 fi
 
+if ! grep -Fq "grid-template-columns: 250px minmax(0, 1fr)" "$DOCS_STYLE" ||
+  ! grep -Fq "@media (max-width: 900px)" "$DOCS_STYLE" ||
+  ! grep -Fq "flex-direction: column" "$SPLIT_STYLE" ||
+  ! grep -Fq "overflow-x: auto" "$NAV_STYLE" ||
+  ! grep -Fq "max-height: 280px" "$SIDEBAR_STYLE"; then
+  printf '%s\n' "Docs workspace must keep its desktop grid and mobile stack contract." >&2
+  exit 1
+fi
+
+for focus_style in "$NAV_STYLE" "$SIDEBAR_STYLE" "$LANGUAGE_STYLE" "$CTA_STYLE"; do
+  if ! grep -Fq ":focus-visible" "$focus_style"; then
+    printf '%s\n' "Docs controls must preserve visible keyboard focus in $focus_style." >&2
+    exit 1
+  fi
+done
+
+if ! grep -Fq 'aria-label={label}' "$LANGUAGE_SOURCE" ||
+  [ "$(grep -Ec '^[[:space:]]+label="' "$DOCS_PAGE")" -ne 4 ] ||
+  ! grep -Fq '<section key={section.title}>' "$SIDEBAR_SOURCE" ||
+  ! grep -Fq '<li key={link}>' "$SIDEBAR_SOURCE"; then
+  printf '%s\n' "Docs language controls and sidebar lists must remain accessible and keyed." >&2
+  exit 1
+fi
+
 if ! grep -Fq "status: completed" "$PLAN"; then
   printf '%s\n' "Plan must be marked completed." >&2
   exit 1
@@ -360,6 +404,12 @@ fi
 if ! grep -Fq "Status: Completed" "$CI_PLAN" ||
   ! grep -Fq "make check" "$CI_PLAN"; then
   printf '%s\n' "CI baseline plan must be completed and record make check verification." >&2
+  exit 1
+fi
+
+if ! grep -Fq "status: completed" "$RESPONSIVE_DOCS_PLAN" ||
+  ! grep -Fq "Mobile screenshot at 390x844" "$RESPONSIVE_DOCS_PLAN"; then
+  printf '%s\n' "Responsive docs workspace plan must remain completed and visually verified." >&2
   exit 1
 fi
 

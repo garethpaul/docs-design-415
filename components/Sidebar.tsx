@@ -52,7 +52,7 @@ const SidebarNav = () => {
     <div className={styles.docsNav}>
       <div className={styles.sideNav + " " + styles.sideNavPadded}>
         <div className={styles.searchContainer}>
-          <button className={styles.DocSearchButton}>
+          <button className={styles.DocSearchButton} type="button">
             <span className={styles.iconContainer}>
               <svg
                 width="20"
@@ -79,17 +79,18 @@ const SidebarNav = () => {
         </div>
 
         {sections.map((section) => (
-          <section>
+          <section key={section.title}>
             <h3 className={styles.sideNavHeader}>{section.title}</h3>
             <ul className={styles.sideNav}>
               {section.links.map((link) => (
-                <a
-                  key={link}
-                  href={`/docs/${link.toLowerCase().replace(/ /g, "-")}`}
-                  className={styles.sideNavItem}
-                >
-                  {link}
-                </a>
+                <li key={link}>
+                  <a
+                    href={`/docs/${link.toLowerCase().replace(/ /g, "-")}`}
+                    className={styles.sideNavItem}
+                  >
+                    {link}
+                  </a>
+                </li>
               ))}
             </ul>
           </section>

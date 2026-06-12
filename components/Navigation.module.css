@@ -1,14 +1,41 @@
+.nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 28px;
+  min-height: 52px;
+  padding: 10px 18px;
+  overflow-x: auto;
+  border-bottom: 1px solid #ececf1;
+  scrollbar-width: thin;
+}
+
 .nav a {
-    color:black;
-    text-decoration: none;
-    font-size: 14px;
-    margin-right: 20px;
+  color: black;
+  text-decoration: none;
+  font-size: 14px;
+  margin-right: 20px;
+  white-space: nowrap;
+}
+
+.nav a:focus-visible {
+  outline: 2px solid #0ca37f;
+  outline-offset: 4px;
+  border-radius: 2px;
+}
+
+.primaryNav {
+  display: flex;
+  align-items: center;
+  flex: none;
 }
 .navContainer {
-    display: flex;
-    justify-content: flex-end;
-    padding: 0 20px;
-  }
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex: none;
+  padding: 0 20px;
+}
 
   .linkItem {
     display: flex;
@@ -20,11 +47,25 @@
 
   }
 
-  .profile {
+.profile {
     width:30px;
     height: 30px;
     border-radius: 50%;
     margin-left: 50px;
     object-fit: cover; /* To make sure the image covers the entire area of the container without distorting */
+}
+
+@media (max-width: 600px) {
+  .nav {
+    gap: 18px;
+    padding: 10px 14px;
   }
-  
+
+  .nav a {
+    margin-right: 14px;
+  }
+
+  .navContainer {
+    padding-right: 4px;
+  }
+}

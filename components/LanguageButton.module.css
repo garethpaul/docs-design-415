@@ -1,6 +1,8 @@
 .container {
   display: flex;
   gap: 20px;
+  width: 100%;
+  flex-wrap: wrap;
 }
 
 .languageButton {
@@ -15,8 +17,9 @@
   cursor: pointer;
 }
 
-.languageButton:focus {
-  outline: none;
+.languageButton:focus-visible {
+  outline: 2px solid #0ca37f;
+  outline-offset: 3px;
 }
 
 .languageIcon {
@@ -24,11 +27,3 @@
   height: 39px;
   flex-shrink: 0;
 }
-
-.container {
-  display: flex;
-  gap: 20px;
-  width: 100%; /* Ensure the container takes full width */
-  flex-wrap: wrap; /* Allow the items to wrap to the next line if they don't fit */
-}
-

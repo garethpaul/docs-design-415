@@ -33,6 +33,12 @@
     margin-right: 10px;
 }
 
+.DocSearchButton:focus-visible,
+.sideNavItem:focus-visible {
+    outline: 2px solid #0ca37f;
+    outline-offset: 2px;
+}
+
 .iconContainer {
     width: 20px;
     height: 20px;
@@ -81,6 +87,10 @@
     padding: 0;
     margin: 0;
   }
+
+.sideNav li {
+    list-style: none;
+}
   
   /* Styling for individual navigation items */
   .sideNavItem {
@@ -108,3 +118,17 @@
   .sideNavChild {
     padding-left: 40px;  /* Adjust to your preference */
   }
+
+@media (max-width: 900px) {
+    .docsNav {
+        width: 100%;
+        height: auto;
+        max-height: 280px;
+        position: static;
+        border-bottom: 1px solid #dedee3;
+    }
+
+    .sideNavPadded {
+        padding: 14px 16px 18px;
+    }
+}

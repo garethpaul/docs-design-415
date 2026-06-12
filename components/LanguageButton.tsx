@@ -1,9 +1,14 @@
-import React from "react";
+import React, { ReactNode } from "react";
 import styles from "./LanguageButton.module.css";
 
-const LanguageButton = ({ iconSrc }) => {
+type LanguageButtonProps = {
+  iconSrc: ReactNode;
+  label: string;
+};
+
+const LanguageButton = ({ iconSrc, label }: LanguageButtonProps) => {
   return (
-    <button className={styles.languageButton}>
+    <button className={styles.languageButton} type="button" aria-label={label} title={label}>
       <div className={styles.languageIcon}>{iconSrc}</div>
     </button>
   );

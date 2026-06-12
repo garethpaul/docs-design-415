@@ -50,6 +50,7 @@ const DocsPage = () => (
 
           <div className={styles.container}>
             <LanguageButton
+              label="Python"
               iconSrc={
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -69,6 +70,7 @@ const DocsPage = () => (
               }
             />
             <LanguageButton
+              label="Node.js"
               iconSrc={
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -85,6 +87,7 @@ const DocsPage = () => (
               }
             />
             <LanguageButton
+              label="TypeScript"
               iconSrc={
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -102,6 +105,7 @@ const DocsPage = () => (
               }
             />
             <LanguageButton
+              label="Java"
               iconSrc={
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
