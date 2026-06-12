@@ -90,6 +90,12 @@ and 24 on Ubuntu 24.04 for pushes, pull requests, and manual dispatches. The wor
 third-party actions, grants read-only repository access, and bounds each job to
 15 minutes. It does not persist checkout credentials in the job workspace.
 
+The `/docs` workspace retains its 250-pixel navigation rail and split intro/editor
+layout on desktop. At 900 pixels and below, the sidebar becomes a bounded
+full-width region and the content stacks into one column. Top navigation remains
+horizontally available, and links, search, CTA, and language controls expose
+visible keyboard focus. Language icon controls include accessible labels.
+
 When the required SDK or runtime is unavailable, use static checks and source review first, then verify on a machine that has the matching platform toolchain.
 
 ## Configuration and Secrets
@@ -149,6 +155,8 @@ When the required SDK or runtime is unavailable, use static checks and source re
   request, parameter, and message field validation.
 - See `docs/plans/2026-06-10-ci-baseline.md` for the hosted GitHub Actions
   baseline.
+- See `docs/plans/2026-06-12-responsive-docs-workspace.md` for responsive docs
+  layout and keyboard-focus coverage.
 - See `docs/plans/2026-06-10-docs-design-execute-enable-gate.md` for the
   explicit execute-route deployment interlock.
 

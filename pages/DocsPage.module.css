@@ -1,0 +1,53 @@
+.docsShell {
+  display: grid;
+  grid-template-columns: 250px minmax(0, 1fr);
+  min-height: calc(100vh - 52px);
+}
+
+.sidebarColumn,
+.mainContent {
+  min-width: 0;
+}
+
+.mainContent {
+  padding: 20px;
+  overflow: hidden;
+}
+
+.intro {
+  margin-left: 20px;
+  max-width: 660px;
+}
+
+.introText {
+  display: block;
+  font-size: 33px;
+  font-weight: 300;
+  line-height: 40px;
+}
+
+@media (max-width: 900px) {
+  .docsShell {
+    display: block;
+  }
+
+  .mainContent {
+    padding: 28px 20px 48px;
+    overflow: visible;
+  }
+
+  .intro {
+    margin-left: 0;
+  }
+}
+
+@media (max-width: 600px) {
+  .mainContent {
+    padding: 24px 16px 40px;
+  }
+
+  .introText {
+    font-size: 28px;
+    line-height: 35px;
+  }
+}

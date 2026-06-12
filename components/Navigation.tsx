@@ -4,16 +4,8 @@ import styles from "./Navigation.module.css";
 
 const Navigation: React.FC = () => {
   return (
-    <nav
-      style={{
-        display: "flex",
-        justifyContent: "space-between",
-        alignItems: "center",
-        padding: "10px",
-      }}
-      className={styles.nav}
-    >
-      <div style={{ display: "flex", alignItems: "center" }}>
+    <nav className={styles.nav} aria-label="Primary navigation">
+      <div className={styles.primaryNav}>
         <svg
           xmlns="http://www.w3.org/2000/svg"
           width="24"

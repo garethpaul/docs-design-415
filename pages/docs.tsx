@@ -1,4 +1,3 @@
-import Link from "next/link";
 import Layout from "../components/Layout";
 import "@radix-ui/themes/styles.css";
 import "@radix-ui/colors/black-alpha.css";
@@ -7,37 +6,29 @@ import "@radix-ui/colors/mauve.css";
 import "@radix-ui/colors/purple.css";
 import "@radix-ui/colors/violet.css";
 import { Theme } from "@radix-ui/themes";
-import Navigation from "../components/Navigation";
 import Editor from "../components/Editor";
-import { Flex, Text, Button } from "@radix-ui/themes";
+import { Text } from "@radix-ui/themes";
 import SidebarNav from "../components/Sidebar";
 import SplitComponent from "../components/SpitComponent";
-import styles from "../components/LanguageButton.module.css";
+import languageStyles from "../components/LanguageButton.module.css";
 import LanguageButton from "../components/LanguageButton";
 import CTAButton from "../components/CTAButton";
+import styles from "./DocsPage.module.css";
 
 const DocsPage = () => (
   <Theme>
     <Layout title="OpenAI Playground">
-      <Flex direction="row" style={{ height: "100vh", margin: 0, padding: 0 }}>
-        {/* Sidebar on the Left */}
-        <div style={{ flexBasis: "250px", flexGrow: 0 }}>
+      <div className={styles.docsShell}>
+        <aside className={styles.sidebarColumn} aria-label="Documentation navigation">
           <SidebarNav />
-        </div>
+        </aside>
 
-        {/* Docs on the Right */}
-        <div style={{ flex: 1, padding: "20px" }}>
+        <main className={styles.mainContent}>
           <SplitComponent
             leftChild={
               <>
-                <div style={{ marginLeft: "20px" }}>
-                  <Text
-                    style={{
-                      fontSize: "33px",
-                      fontWeight: "300",
-                      lineHeight: "40px",
-                    }}
-                  >
+                <div className={styles.intro}>
+                  <Text className={styles.introText}>
                     OpenAI models are available giving developers access to
                     cutting-edge language and speech-to-text capabilities.
                   </Text>
@@ -48,8 +39,9 @@ const DocsPage = () => (
             rightChild={<Editor />}
           />
 
-          <div className={styles.container}>
+          <div className={languageStyles.container}>
             <LanguageButton
+              label="Python"
               iconSrc={
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -69,6 +61,7 @@ const DocsPage = () => (
               }
             />
             <LanguageButton
+              label="Node.js"
               iconSrc={
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -85,6 +78,7 @@ const DocsPage = () => (
               }
             />
             <LanguageButton
+              label="TypeScript"
               iconSrc={
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -102,6 +96,7 @@ const DocsPage = () => (
               }
             />
             <LanguageButton
+              label="Java"
               iconSrc={
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -151,8 +146,8 @@ const DocsPage = () => (
               }
             />
           </div>
-        </div>
-      </Flex>
+        </main>
+      </div>
     </Layout>
   </Theme>
 );

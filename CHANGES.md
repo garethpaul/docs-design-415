@@ -1,5 +1,14 @@
 # Changes
 
+## 2026-06-12
+
+- Made the docs workspace responsive by stacking the sidebar and intro/editor
+  regions below 900 pixels while preserving the desktop navigation rail.
+- Added scroll-safe top navigation, visible keyboard focus states, accessible
+  language labels, and semantic keyed sidebar lists.
+- Added desktop, mobile, and focused-control screenshot verification to the
+  responsive docs plan.
+
 ## 2026-06-10
 
 - Added an explicit, default-off `DOCS_EXECUTE_ENABLED=true` deployment gate

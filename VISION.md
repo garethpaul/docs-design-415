@@ -27,6 +27,8 @@ Priority:
 - Keep the spend-capable execute route disabled unless deployment explicitly
   enables it
 - Keep visual changes tied to the docs onboarding purpose
+- Keep the docs workspace readable on mobile and preserve visible keyboard
+  focus across navigation and action controls
 
 Current baseline:
 
