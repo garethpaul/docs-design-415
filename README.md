@@ -88,7 +88,7 @@ the Webpack-backed Next build so repeated local checks do not reuse stale traces
 GitHub Actions runs clean `npm ci` installs and `make check` on Node 20, 22,
 and 24 on Ubuntu 24.04 for pushes, pull requests, and manual dispatches. The workflow pins its
 third-party actions, grants read-only repository access, and bounds each job to
-15 minutes.
+15 minutes. It does not persist checkout credentials in the job workspace.
 
 When the required SDK or runtime is unavailable, use static checks and source review first, then verify on a machine that has the matching platform toolchain.
 

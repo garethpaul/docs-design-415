@@ -8,7 +8,8 @@
 - Added a GitHub Actions workflow that runs clean installs and `make check` on
   Node 20, 22, and 24 for pushes, pull requests, and manual dispatches.
 - Pinned GitHub Actions by commit, restricted workflow permissions to read-only,
-  and bounded verification jobs to 15 minutes.
+  disabled persisted checkout credentials, and bounded verification jobs to 15
+  minutes.
 - Updated Next, OpenAI, React, React DOM, React types, and CodeMirror lint while
   preserving the repository's explicit Webpack production build contract.
 - Raised the dependency audit gate to include moderate-severity findings and
