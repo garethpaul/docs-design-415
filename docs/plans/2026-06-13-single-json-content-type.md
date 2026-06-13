@@ -2,7 +2,7 @@
 title: Single JSON Content Type
 type: security
 date: 2026-06-13
-status: planned
+status: completed
 ---
 
 # Single JSON Content Type
@@ -48,3 +48,28 @@ different media type.
   coverage, documentation, and completed plan evidence.
 - Audit the exact diff, manifest/lockfile preservation, generated artifacts,
   and credential-like additions before committing.
+
+## Work Completed
+
+- Rejected every non-string content-type value before media-type
+  normalization, including conflicting, duplicate, and empty header arrays.
+- Preserved one case-insensitive `application/json` value with optional
+  parameters.
+- Added offline regressions and helper-scoped source contracts for the
+  single-value boundary.
+- Documented the ambiguous-header rejection without changing UI behavior.
+
+## Verification Completed
+
+- Node.js 20.19.5, 22.22.2, and 24.16.0 `make check` passed TypeScript checks,
+  offline parser tests, clean Webpack production builds, baseline contracts,
+  and moderate-severity audits with zero vulnerabilities.
+- The rooted Make gate passed from an external working directory on Node.js
+  20.19.5.
+- Eight isolated hostile mutations were rejected across array handling, helper
+  scope, accepted media types, regression coverage, documentation, and
+  completed plan evidence.
+- Shell syntax, `git diff --check`, exact-path inspection, unchanged manifest
+  and lockfile checks, generated-artifact inspection, and credential-like
+  addition inspection passed.
+- The execute route remained disabled; no OpenAI key was used and no live OpenAI request was made.

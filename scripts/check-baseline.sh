@@ -32,6 +32,7 @@ EXECUTE_ENABLE_PLAN="$ROOT_DIR/docs/plans/2026-06-10-docs-design-execute-enable-
 RESPONSIVE_DOCS_PLAN="$ROOT_DIR/docs/plans/2026-06-12-responsive-docs-workspace.md"
 REQUEST_TIMEOUT_PLAN="$ROOT_DIR/docs/plans/2026-06-13-docs-design-openai-request-timeout.md"
 EXECUTE_RATE_BUDGET_PLAN="$ROOT_DIR/docs/plans/2026-06-13-docs-design-execute-fixed-window-budget.md"
+SINGLE_CONTENT_TYPE_PLAN="$ROOT_DIR/docs/plans/2026-06-13-single-json-content-type.md"
 CI_WORKFLOW="$ROOT_DIR/.github/workflows/check.yml"
 MAKEFILE="$ROOT_DIR/Makefile"
 
@@ -77,10 +78,17 @@ for path in \
   "docs/plans/2026-06-12-responsive-docs-workspace.md" \
   "docs/plans/2026-06-13-docs-design-openai-request-timeout.md" \
   "docs/plans/2026-06-13-docs-design-execute-fixed-window-budget.md" \
+  "docs/plans/2026-06-13-single-json-content-type.md" \
   "scripts/test-execute-parser.ts" \
   "scripts/check-baseline.sh"; do
   require_file "$path"
 done
+
+CONTENT_TYPE_HELPER=$(awk '
+  /^export function hasJsonContentType\(/ { capture = 1 }
+  capture && /^export function / && $0 !~ /^export function hasJsonContentType\(/ { exit }
+  capture { print }
+' "$API")
 
 if ! grep -Fq "actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e" "$CI_WORKFLOW" ||
   ! grep -Fq "node-version: [20, 22, 24]" "$CI_WORKFLOW" ||
@@ -398,6 +406,14 @@ if ! grep -Fq "hasJsonContentType(\"Application/JSON; charset=utf-8\")" "$ROOT_D
   exit 1
 fi
 
+if [ "$(printf '%s\n' "$CONTENT_TYPE_HELPER" | grep -Fc 'if (typeof contentType !== "string") {')" -ne 1 ] ||
+  ! grep -Fq 'hasJsonContentType(["text/plain", "application/json"]), false' "$ROOT_DIR/scripts/test-execute-parser.ts" ||
+  ! grep -Fq 'hasJsonContentType(["application/json", "application/json"]), false' "$ROOT_DIR/scripts/test-execute-parser.ts" ||
+  ! grep -Fq 'hasJsonContentType([]), false' "$ROOT_DIR/scripts/test-execute-parser.ts"; then
+  printf '%s\n' "Execute content-type validation must reject every multi-value header." >&2
+  exit 1
+fi
+
 if ! grep -Fq 'isExecuteApiEnabled("1")' "$ROOT_DIR/scripts/test-execute-parser.ts" ||
   ! grep -Fq 'isExecuteApiEnabled(" TRUE ")' "$ROOT_DIR/scripts/test-execute-parser.ts"; then
   printf '%s\n' "Parser tests must cover explicit API enablement normalization." >&2
@@ -593,6 +609,22 @@ if ! grep -Fq "OPENAI_API_KEY" "$README" ||
   ! grep -Fq "clears the ignored .next directory" "$README" ||
   ! grep -Fq "whitespace-only message content" "$README"; then
   printf '%s\n' "README must document API key, model allow-list, JSON content type, npm test, make check, clean build behavior, and blank message handling." >&2
+  exit 1
+fi
+
+if ! grep -Fq "rejects multi-value Content-Type headers" "$README" ||
+  ! grep -Fq "Ambiguous multi-value Content-Type headers" "$ROOT_DIR/SECURITY.md" ||
+  ! grep -Fq "Reject ambiguous multi-value content types" "$VISION" ||
+  ! grep -Fq "Rejected ambiguous multi-value Content-Type headers" "$ROOT_DIR/CHANGES.md"; then
+  printf '%s\n' "Project guidance must document the single content-type boundary." >&2
+  exit 1
+fi
+
+if ! grep -Fq "status: completed" "$SINGLE_CONTENT_TYPE_PLAN" ||
+  ! grep -Fq "make check" "$SINGLE_CONTENT_TYPE_PLAN" ||
+  ! grep -Fq "hostile mutations were rejected" "$SINGLE_CONTENT_TYPE_PLAN" ||
+  ! grep -Fq "no live OpenAI request" "$SINGLE_CONTENT_TYPE_PLAN"; then
+  printf '%s\n' "Single JSON content-type plan must record completed verification." >&2
   exit 1
 fi
 

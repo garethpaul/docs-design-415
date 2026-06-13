@@ -40,6 +40,8 @@ Helpful reports include:
   minute and rejects excess traffic before parsing with `429` and
   `Retry-After`. Public multi-instance deployments still require shared
   upstream authentication and rate limiting.
+- Ambiguous multi-value Content-Type headers are rejected before request-body
+  normalization, including arrays where one value names JSON.
 - The checked-in lockfile retains patched `esbuild 0.28.1` for the parser test
   runner, and the baseline rejects a regression to the vulnerable resolution.
 - GitHub Actions runs `make check` after clean installs on Node 20, 22, and 24

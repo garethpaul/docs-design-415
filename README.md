@@ -80,8 +80,9 @@ npm test
 build, parser/validator regression tests through the source baseline guard,
 and `npm audit --audit-level=moderate`. The execute API remains disabled unless
 `DOCS_EXECUTE_ENABLED=true` and requires `OPENAI_API_KEY` at runtime. It accepts
-`Content-Type: application/json` requests only and
-validates submitted examples before calling the OpenAI SDK. Request bodies may only contain a `code` string. It rejects whitespace-only message content so
+`Content-Type: application/json` requests only, rejects multi-value Content-Type
+headers, and validates submitted examples before calling the OpenAI SDK.
+Request bodies may only contain a `code` string. It rejects whitespace-only message content so
 blank prompts are not proxied. Chat message objects may only contain `role` and
 `content`. Enabled provider calls use a fixed 30-second timeout with zero SDK
 retries so one interactive request has a bounded OpenAI attempt. Enabled
@@ -133,6 +134,8 @@ When the required SDK or runtime is unavailable, use static checks and source re
 - Enabled traffic is limited to ten enabled POST attempts per process per minute;
   excess attempts receive `429` with `Retry-After` before parsing or provider
   setup. Multi-instance deployments still require shared upstream enforcement.
+- Execute content-type validation rejects multi-value Content-Type headers to
+  avoid ambiguous request interpretation before body normalization.
 - The parser test toolchain retains patched `esbuild 0.28.1` in the lockfile.
 
 ## Security and Privacy Notes
