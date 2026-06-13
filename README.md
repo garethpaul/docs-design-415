@@ -131,9 +131,11 @@ When the required SDK or runtime is unavailable, use static checks and source re
   before reading `code`, `model`, `messages`, `role`, or `content`.
 - Enabled provider calls use a fixed 30-second timeout with zero SDK retries so
   one interactive request has a bounded OpenAI attempt.
-- Enabled traffic is limited to ten enabled POST attempts per process per minute;
-  excess attempts receive `429` with `Retry-After` before parsing or provider
-  setup. Multi-instance deployments still require shared upstream enforcement.
+- Provider-eligible requests consume the process-local budget only after
+  Content-Type, body, code, parameter, and API-key validation. Ten eligible
+  attempts per process per minute are admitted; excess eligible attempts receive
+  `429` with `Retry-After` before provider setup. Multi-instance deployments
+  still require shared upstream enforcement.
 - Execute content-type validation rejects multi-value Content-Type headers to
   avoid ambiguous request interpretation before body normalization.
 - The parser test toolchain retains patched `esbuild 0.28.1` in the lockfile.
@@ -179,6 +181,8 @@ When the required SDK or runtime is unavailable, use static checks and source re
   bounded provider-call contract.
 - See `docs/plans/2026-06-13-docs-design-execute-fixed-window-budget.md` for the
   process-local execute request budget.
+- See `docs/plans/2026-06-13-docs-design-provider-eligible-budget.md` for local
+  validation ordering before execute capacity consumption.
 
 ## Contributing
 

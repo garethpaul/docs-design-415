@@ -485,10 +485,6 @@ export default async function handler(
     return res.status(503).json({ error: "Execute API is disabled" });
   }
 
-  if (enforceExecuteRateLimit(res)) {
-    return;
-  }
-
   if (!hasJsonContentType(req.headers["content-type"])) {
     return res.status(415).json({ error: "Request content type must be application/json" });
   }
@@ -511,6 +507,10 @@ export default async function handler(
 
   if (!process.env.OPENAI_API_KEY) {
     return res.status(503).json({ error: "OPENAI_API_KEY is not configured" });
+  }
+
+  if (enforceExecuteRateLimit(res)) {
+    return;
   }
 
   try {

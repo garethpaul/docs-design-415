@@ -1,6 +1,6 @@
 # Consume Docs Design Capacity Only for Provider-Eligible Requests
 
-Status: In Progress
+Status: Completed
 
 ## Context
 
@@ -48,3 +48,26 @@ eligible to call OpenAI.
 - The limiter remains process-local and unauthenticated; public multi-instance
   deployments still require shared identity-aware enforcement.
 - Locally valid attempts that fail upstream intentionally consume capacity.
+
+## Work Completed
+
+- Moved capacity consumption after Content-Type, body, code, parameter, and
+  API-key validation and immediately before provider setup.
+- Added an offline exhausted-window handler regression proving invalid traffic
+  remains a `415` response.
+- Added ordered source, test, project-guidance, contributor-guidance, and plan
+  contracts without changing dependencies, UI, or parser acceptance.
+
+## Verification Completed
+
+- Node.js 20.19.5, 22.22.2, and 24.16.0 `make check` passed type-check,
+  parser tests, clean Webpack production builds, baseline contracts, and
+  moderate-severity audits with zero vulnerabilities.
+- The rooted external-working-directory `make check` passed on Node.js 20.19.5.
+- Node.js 20.19.5 focused parser and type-check gates passed.
+- The isolated temporary final-state checker and parser suite passed.
+- Nine isolated hostile mutations were rejected across early consumption,
+  post-client enforcement, API-key bypass, limiter bypass, regression drift,
+  README, contributor guidance, and plan status.
+- Shell syntax and `git diff --check` passed.
+- No live OpenAI request, real credential, browser automation, or deployment was used.

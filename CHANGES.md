@@ -2,10 +2,12 @@
 
 ## 2026-06-13
 
+- Moved execute capacity consumption after local validation and API-key checks
+  so invalid requests cannot exhaust provider-eligible request slots.
 - Rejected ambiguous multi-value Content-Type headers before execute request
   body normalization while preserving single JSON values with parameters.
-- Added a process-local fixed-window execute budget that rejects excess enabled
-  POST attempts with `429` and `Retry-After` before parsing or provider setup.
+- Added a process-local fixed-window execute budget that rejects excess
+  provider-eligible attempts with `429` and `Retry-After` before provider setup.
 - Bounded enabled OpenAI execute requests to 30 seconds and disabled automatic
   SDK retries so one interactive request has a predictable provider window.
 - Added an immutable, executable request-options contract and baseline guard.

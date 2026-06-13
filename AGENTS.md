@@ -56,8 +56,8 @@
 - Detected references to OpenAI. Keep API keys, OAuth credentials, tokens, and account-specific values in local configuration only.
 - `OPENAI_API_KEY` must be provided through the environment. Do not commit OpenAI keys or sample outputs containing private prompt data.
 - The spend-capable execute route must remain disabled by default. `DOCS_EXECUTE_ENABLED` must normalize to exactly `true` before requests are proxied; this interlock does not replace authentication or rate limiting for public deployments.
-- Preserve the process-local execute request budget before parsing and provider
-  setup; do not describe it as distributed multi-instance enforcement.
+- Preserve the process-local budget so only provider-eligible requests consume capacity
+  after local validation and before provider setup; do not describe it as distributed multi-instance enforcement.
 - `OPENAI_ALLOWED_MODELS` can narrow the comma-separated chat model allow-list. It can only narrow the checked-in default model allow-list; unsupported values are not allowed to expand the proxy. When unset, the execute API only accepts the checked-in defaults.
 - Submitted chat messages are normalized to `role` and `content` only; message metadata fields are rejected instead of silently dropped.
 - Execute API request bodies are limited to the `code` field; extra fields such as credentials or metadata are rejected before code parsing.

@@ -48,8 +48,9 @@ Current baseline:
 - `DOCS_EXECUTE_ENABLED=true` is required before provider requests can run;
   public deployments still need upstream authentication and rate limiting.
 - Enabled provider calls use a 30-second timeout with SDK retries disabled.
-- Keep a process-local execute request budget before parsing and provider setup;
-  require shared upstream enforcement for public multi-instance deployments.
+- Consume execute capacity only after local validation and configuration, but
+  before provider setup; require shared upstream enforcement for public
+  multi-instance deployments.
 - Reject ambiguous multi-value content types before execute body parsing.
 - The parser test toolchain retains patched `esbuild 0.28.1` in the lockfile.
 - The editor sends the current code string directly and avoids logging prompt
