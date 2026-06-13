@@ -47,6 +47,7 @@ Current baseline:
   cannot expand beyond the checked-in default model set.
 - `DOCS_EXECUTE_ENABLED=true` is required before provider requests can run;
   public deployments still need upstream authentication and rate limiting.
+- Enabled provider calls use a 30-second timeout with SDK retries disabled.
 - The editor sends the current code string directly and avoids logging prompt
   content, parsed parameters, or provider responses.
 - The execute API rejects whitespace-only message content before proxying.

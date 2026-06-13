@@ -29,6 +29,7 @@ OWN_FIELD_PLAN="$ROOT_DIR/docs/plans/2026-06-09-docs-design-own-field-validation
 CI_PLAN="$ROOT_DIR/docs/plans/2026-06-10-ci-baseline.md"
 EXECUTE_ENABLE_PLAN="$ROOT_DIR/docs/plans/2026-06-10-docs-design-execute-enable-gate.md"
 RESPONSIVE_DOCS_PLAN="$ROOT_DIR/docs/plans/2026-06-12-responsive-docs-workspace.md"
+REQUEST_TIMEOUT_PLAN="$ROOT_DIR/docs/plans/2026-06-13-docs-design-openai-request-timeout.md"
 CI_WORKFLOW="$ROOT_DIR/.github/workflows/check.yml"
 MAKEFILE="$ROOT_DIR/Makefile"
 
@@ -72,6 +73,7 @@ for path in \
   "docs/plans/2026-06-10-ci-baseline.md" \
   "docs/plans/2026-06-10-docs-design-execute-enable-gate.md" \
   "docs/plans/2026-06-12-responsive-docs-workspace.md" \
+  "docs/plans/2026-06-13-docs-design-openai-request-timeout.md" \
   "scripts/test-execute-parser.ts" \
   "scripts/check-baseline.sh"; do
   require_file "$path"
@@ -243,6 +245,7 @@ for required in \
   "MAX_MESSAGES" \
   "MAX_MESSAGE_CONTENT_LENGTH" \
   "MAX_COMPLETION_TOKENS" \
+  "OPENAI_REQUEST_OPTIONS" \
   "extractParameters" \
   "hasJsonContentType" \
   "isExecuteApiEnabled" \
@@ -259,6 +262,14 @@ for required in \
     exit 1
   fi
 done
+
+if ! grep -Fq "OPENAI_REQUEST_OPTIONS = Object.freeze({ timeout: 30_000, maxRetries: 0 })" "$API" ||
+  ! grep -Fq "OPENAI_REQUEST_OPTIONS," "$API" ||
+  ! grep -Fq "assert.deepEqual(OPENAI_REQUEST_OPTIONS, { timeout: 30_000, maxRetries: 0 })" "$ROOT_DIR/scripts/test-execute-parser.ts" ||
+  ! grep -Fq "Object.isFrozen(OPENAI_REQUEST_OPTIONS)" "$ROOT_DIR/scripts/test-execute-parser.ts"; then
+  printf '%s\n' "OpenAI execute requests must keep the tested 30-second zero-retry boundary." >&2
+  exit 1
+fi
 
 if ! grep -Fq 'value.trim().toLowerCase() === "true"' "$API" ||
   ! grep -Fq 'return res.status(503).json({ error: "Execute API is disabled" })' "$API"; then
@@ -496,6 +507,15 @@ fi
 if ! grep -Fq "status: completed" "$EXECUTE_ENABLE_PLAN" ||
   ! grep -Fq "make check" "$EXECUTE_ENABLE_PLAN"; then
   printf '%s\n' "Execute API enable gate plan must be completed and record verification." >&2
+  exit 1
+fi
+
+if ! grep -Fq "30-second timeout" "$README" ||
+  ! grep -Fq "zero SDK retries" "$README" ||
+  ! grep -Fq "30-second timeout" "$ROOT_DIR/SECURITY.md" ||
+  ! grep -Fq "SDK retries disabled" "$ROOT_DIR/VISION.md" ||
+  ! grep -Fq "30 seconds" "$ROOT_DIR/CHANGES.md"; then
+  printf '%s\n' "Project guidance must document the bounded provider-call contract." >&2
   exit 1
 fi
 

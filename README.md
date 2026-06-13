@@ -83,7 +83,9 @@ and `npm audit --audit-level=moderate`. The execute API remains disabled unless
 `Content-Type: application/json` requests only and
 validates submitted examples before calling the OpenAI SDK. Request bodies may only contain a `code` string. It rejects whitespace-only message content so
 blank prompts are not proxied. Chat message objects may only contain `role` and
-`content`. The build script clears the ignored .next directory before invoking
+`content`. Enabled provider calls use a fixed 30-second timeout with zero SDK
+retries so one interactive request has a bounded OpenAI attempt. The build
+script clears the ignored .next directory before invoking
 the Webpack-backed Next build so repeated local checks do not reuse stale traces.
 GitHub Actions runs clean `npm ci` installs and `make check` on Node 20, 22,
 and 24 on Ubuntu 24.04 for pushes, pull requests, and manual dispatches. The workflow pins its
@@ -121,6 +123,8 @@ When the required SDK or runtime is unavailable, use static checks and source re
   non-finite values are rejected before proxying.
 - Execute normalization requires own request, parameter, and message fields
   before reading `code`, `model`, `messages`, `role`, or `content`.
+- Enabled provider calls use a fixed 30-second timeout with zero SDK retries so
+  one interactive request has a bounded OpenAI attempt.
 
 ## Security and Privacy Notes
 
@@ -159,6 +163,8 @@ When the required SDK or runtime is unavailable, use static checks and source re
   layout and keyboard-focus coverage.
 - See `docs/plans/2026-06-10-docs-design-execute-enable-gate.md` for the
   explicit execute-route deployment interlock.
+- See `docs/plans/2026-06-13-docs-design-openai-request-timeout.md` for the
+  bounded provider-call contract.
 
 ## Contributing
 
