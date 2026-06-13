@@ -5,6 +5,8 @@
 - Bounded enabled OpenAI execute requests to 30 seconds and disabled automatic
   SDK retries so one interactive request has a predictable provider window.
 - Added an immutable, executable request-options contract and baseline guard.
+- Retained Dependabot's exact `esbuild 0.28.1` lockfile update and added a
+  static contract preventing regression to the vulnerable resolution.
 
 ## 2026-06-12
 

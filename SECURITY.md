@@ -36,6 +36,8 @@ Helpful reports include:
   rate limiting.
 - Enabled OpenAI calls use a 30-second timeout with automatic SDK retries
   disabled so one request cannot multiply provider attempts or run indefinitely.
+- The checked-in lockfile retains patched `esbuild 0.28.1` for the parser test
+  runner, and the baseline rejects a regression to the vulnerable resolution.
 - GitHub Actions runs `make check` after clean installs on Node 20, 22, and 24
   for pushes, pull requests, and manual dispatches. Actions are pinned by
   commit, workflow access is read-only, and the audit gate includes

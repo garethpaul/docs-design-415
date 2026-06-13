@@ -185,9 +185,10 @@ if ! grep -Fq 'ROOT := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))' "$MAKEFIL
   exit 1
 fi
 
-node - "$PACKAGE_JSON" <<'NODE'
+node - "$PACKAGE_JSON" "$ROOT_DIR/package-lock.json" <<'NODE'
 const fs = require("fs");
 const pkg = JSON.parse(fs.readFileSync(process.argv[2], "utf8"));
+const lock = JSON.parse(fs.readFileSync(process.argv[3], "utf8"));
 if (pkg.dependencies.next === "latest") {
   throw new Error("next must be pinned; latest is not reproducible");
 }
@@ -227,6 +228,9 @@ for (const [name, version] of Object.entries({
 }
 if (pkg.scripts.audit !== "npm audit --audit-level=moderate") {
   throw new Error("package.json must keep the moderate-severity audit gate");
+}
+if (lock.packages?.["node_modules/esbuild"]?.version !== "0.28.1") {
+  throw new Error("package-lock.json must retain patched esbuild 0.28.1");
 }
 NODE
 
@@ -507,6 +511,16 @@ fi
 if ! grep -Fq "status: completed" "$EXECUTE_ENABLE_PLAN" ||
   ! grep -Fq "make check" "$EXECUTE_ENABLE_PLAN"; then
   printf '%s\n' "Execute API enable gate plan must be completed and record verification." >&2
+  exit 1
+fi
+
+if ! grep -Fq "status: completed" "$REQUEST_TIMEOUT_PLAN" ||
+  ! grep -Fq "make check" "$REQUEST_TIMEOUT_PLAN" ||
+  ! grep -Fq "Removing the per-request options failed" "$REQUEST_TIMEOUT_PLAN" ||
+  ! grep -Fq "Restoring two SDK retries failed" "$REQUEST_TIMEOUT_PLAN" ||
+  ! grep -Fq 'Downgrading the checked lockfile contract to `esbuild 0.28.0` failed' "$REQUEST_TIMEOUT_PLAN" ||
+  ! grep -Fq "zero vulnerabilities" "$REQUEST_TIMEOUT_PLAN"; then
+  printf '%s\n' "OpenAI request timeout plan must record completed verification." >&2
   exit 1
 fi
 

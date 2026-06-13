@@ -1,7 +1,7 @@
 ---
 title: Docs Design OpenAI Request Timeout
 type: reliability
-status: in_progress
+status: completed
 date: 2026-06-13
 ---
 
@@ -23,6 +23,8 @@ provider attempts.
 - R4. Existing generic provider-error handling must remain unchanged and must
   not expose SDK exception details.
 - R5. Project security and maintenance guidance must record the boundary.
+- R6. Full verification must retain the independent Dependabot `esbuild 0.28.1`
+  lockfile fix rather than weakening the moderate-severity audit gate.
 
 ## Non-Goals
 
@@ -30,17 +32,25 @@ provider attempts.
 - Adding route-level retries, streaming, queues, or cancellation UI.
 - Performing a live OpenAI request.
 
-## Work In Progress
+## Work Completed
 
-- Add immutable timeout and retry options to the provider call.
-- Extend offline assertions, static contracts, and project guidance.
-- Run focused, full, and hostile-mutation verification.
+- Added immutable timeout and retry options to the provider call.
+- Extended offline assertions, static contracts, and project guidance.
+- Retained the exact lockfile-only `esbuild 0.28.1` update from pull request 4
+  and added a static regression contract.
 
-## Current Verification
+## Verification
 
 - Node 20.19.5: parser tests, TypeScript checks, and the static baseline passed.
 - Removing the per-request options failed the static baseline.
 - Restoring two SDK retries failed the executable parser assertion.
-- `npm test` passed type checks, parser tests, the production Webpack build,
-  and the baseline, then stopped at the unchanged `esbuild 0.28.0` audit
-  finding already addressed by independent Dependabot pull request 4.
+- The first `npm test` passed type checks, parser tests, the production Webpack
+  build, and the baseline, then stopped at the pre-existing `esbuild 0.28.0`
+  audit finding already addressed by independent Dependabot pull request 4.
+- After retaining that exact lockfile-only update, `npm test` passed type
+  checks, parser tests, the production Webpack build, the baseline, and the
+  moderate-severity audit with zero vulnerabilities.
+- Downgrading the checked lockfile contract to `esbuild 0.28.0` failed the
+  static baseline.
+- `make check` passed after the completed plan contract was added.
+- `git diff --check` passed.

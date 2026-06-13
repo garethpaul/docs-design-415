@@ -91,6 +91,8 @@ GitHub Actions runs clean `npm ci` installs and `make check` on Node 20, 22,
 and 24 on Ubuntu 24.04 for pushes, pull requests, and manual dispatches. The workflow pins its
 third-party actions, grants read-only repository access, and bounds each job to
 15 minutes. It does not persist checkout credentials in the job workspace.
+The lockfile retains `esbuild 0.28.1` for the `tsx` parser test runner so the
+moderate-severity audit gate rejects the vulnerable 0.28.0 resolution.
 
 The `/docs` workspace retains its 250-pixel navigation rail and split intro/editor
 layout on desktop. At 900 pixels and below, the sidebar becomes a bounded
@@ -125,6 +127,7 @@ When the required SDK or runtime is unavailable, use static checks and source re
   before reading `code`, `model`, `messages`, `role`, or `content`.
 - Enabled provider calls use a fixed 30-second timeout with zero SDK retries so
   one interactive request has a bounded OpenAI attempt.
+- The parser test toolchain retains patched `esbuild 0.28.1` in the lockfile.
 
 ## Security and Privacy Notes
 
