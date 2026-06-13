@@ -36,6 +36,10 @@ Helpful reports include:
   rate limiting.
 - Enabled OpenAI calls use a 30-second timeout with automatic SDK retries
   disabled so one request cannot multiply provider attempts or run indefinitely.
+- A process-local fixed-window budget admits ten enabled POST attempts per
+  minute and rejects excess traffic before parsing with `429` and
+  `Retry-After`. Public multi-instance deployments still require shared
+  upstream authentication and rate limiting.
 - The checked-in lockfile retains patched `esbuild 0.28.1` for the parser test
   runner, and the baseline rejects a regression to the vulnerable resolution.
 - GitHub Actions runs `make check` after clean installs on Node 20, 22, and 24

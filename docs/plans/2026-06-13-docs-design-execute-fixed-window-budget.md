@@ -2,7 +2,7 @@
 title: Docs Design Execute Fixed Window Budget
 type: security
 date: 2026-06-13
-status: planned
+status: completed
 ---
 
 # Docs Design Execute Fixed Window Budget
@@ -79,16 +79,23 @@ POST attempts. Bursts can therefore multiply parsing work and provider spend.
 
 ## Verification
 
-- Run parser tests, typecheck, production build, dependency audit, `make check`,
-  and the rooted external-working-directory wrapper on supported Node versions.
-- Run whitespace, exact-path, lockfile, secret-pattern, and artifact checks.
-- Reject isolated mutations for changed capacity/window, removed enforcement or
-  response guidance, changed status, removed rollover/clock/route regressions,
-  documentation drift, and incomplete plan evidence.
-- Run the prescribed browser skill when available; do not substitute another
-  automation tool if `agent-browser` is absent.
-- Do not enable the deployed route, use an OpenAI key, make live requests, or
-  claim distributed multi-instance enforcement.
+- Node.js 20.19.5, 22.22.2, and 24.16.0 passed parser tests, TypeScript
+  typechecking, the clean Webpack production build, and the moderate-severity
+  dependency audit with zero vulnerabilities.
+- `make check` passed on all three Node versions, and the rooted external
+  wrapper passed from `/tmp` on Node.js 20.19.5.
+- Ten hostile mutations were rejected for changed capacity or window, removed
+  enforcement or `Retry-After`, changed status, removed rollover,
+  backward-clock, or route regressions, documentation drift, and incomplete
+  plan evidence.
+- Shell syntax, `git diff --check`, exact-path inspection, unchanged manifests
+  and lockfile, secret-pattern inspection, and artifact inspection passed.
+- `agent-browser` was not installed, so the prescribed pipeline browser skill
+  could not run and no alternate automation tool was substituted. This API-only
+  change has deterministic route-level coverage.
+- Verification did not enable the deployed route or use an OpenAI key. It made
+  no live OpenAI request and does not claim distributed multi-instance
+  enforcement.
 
 ## Risks
 

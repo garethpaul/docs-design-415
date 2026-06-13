@@ -15,6 +15,7 @@ LANGUAGE_SOURCE="$ROOT_DIR/components/LanguageButton.tsx"
 LANGUAGE_STYLE="$ROOT_DIR/components/LanguageButton.module.css"
 CTA_STYLE="$ROOT_DIR/components/CTAButton.module.css"
 README="$ROOT_DIR/README.md"
+VISION="$ROOT_DIR/VISION.md"
 PLAN="$ROOT_DIR/docs/plans/2026-06-08-docs-design-execute-api-baseline.md"
 CHECK_PLAN="$ROOT_DIR/docs/plans/2026-06-08-docs-design-check-wrapper.md"
 WHITESPACE_PLAN="$ROOT_DIR/docs/plans/2026-06-09-docs-design-whitespace-message-guard.md"
@@ -30,6 +31,7 @@ CI_PLAN="$ROOT_DIR/docs/plans/2026-06-10-ci-baseline.md"
 EXECUTE_ENABLE_PLAN="$ROOT_DIR/docs/plans/2026-06-10-docs-design-execute-enable-gate.md"
 RESPONSIVE_DOCS_PLAN="$ROOT_DIR/docs/plans/2026-06-12-responsive-docs-workspace.md"
 REQUEST_TIMEOUT_PLAN="$ROOT_DIR/docs/plans/2026-06-13-docs-design-openai-request-timeout.md"
+EXECUTE_RATE_BUDGET_PLAN="$ROOT_DIR/docs/plans/2026-06-13-docs-design-execute-fixed-window-budget.md"
 CI_WORKFLOW="$ROOT_DIR/.github/workflows/check.yml"
 MAKEFILE="$ROOT_DIR/Makefile"
 
@@ -74,6 +76,7 @@ for path in \
   "docs/plans/2026-06-10-docs-design-execute-enable-gate.md" \
   "docs/plans/2026-06-12-responsive-docs-workspace.md" \
   "docs/plans/2026-06-13-docs-design-openai-request-timeout.md" \
+  "docs/plans/2026-06-13-docs-design-execute-fixed-window-budget.md" \
   "scripts/test-execute-parser.ts" \
   "scripts/check-baseline.sh"; do
   require_file "$path"
@@ -272,6 +275,35 @@ if ! grep -Fq "OPENAI_REQUEST_OPTIONS = Object.freeze({ timeout: 30_000, maxRetr
   ! grep -Fq "assert.deepEqual(OPENAI_REQUEST_OPTIONS, { timeout: 30_000, maxRetries: 0 })" "$ROOT_DIR/scripts/test-execute-parser.ts" ||
   ! grep -Fq "Object.isFrozen(OPENAI_REQUEST_OPTIONS)" "$ROOT_DIR/scripts/test-execute-parser.ts"; then
   printf '%s\n' "OpenAI execute requests must keep the tested 30-second zero-retry boundary." >&2
+  exit 1
+fi
+
+if ! grep -Fq "EXECUTE_RATE_LIMIT_MAX_REQUESTS = 10" "$API" ||
+  ! grep -Fq "EXECUTE_RATE_LIMIT_WINDOW_MS = 60_000" "$API" ||
+  ! grep -Fq "createFixedWindowRateLimiter" "$API" ||
+  ! grep -Fq "enforceExecuteRateLimit" "$API" ||
+  ! grep -Fq 'res.setHeader("Retry-After", String(rateLimit.retryAfterSeconds))' "$API" ||
+  ! grep -Fq "res.status(429)" "$API"; then
+  printf '%s\n' "Enabled docs-design execute attempts must keep the fixed-window budget." >&2
+  exit 1
+fi
+
+if ! grep -Fq "consumeCapacity(1_000)" "$ROOT_DIR/scripts/test-execute-parser.ts" ||
+  ! grep -Fq "consumeCapacity(61_000)" "$ROOT_DIR/scripts/test-execute-parser.ts" ||
+  ! grep -Fq "consumeCapacity(500)" "$ROOT_DIR/scripts/test-execute-parser.ts" ||
+  ! grep -Fq "enforceExecuteRateLimit(limitedResponse" "$ROOT_DIR/scripts/test-execute-parser.ts" ||
+  ! grep -Fq "assert.equal(limitedResponse.statusCode, 429)" "$ROOT_DIR/scripts/test-execute-parser.ts"; then
+  printf '%s\n' "Execute tests must cover budget rejection, rollover, and clock recovery." >&2
+  exit 1
+fi
+
+if ! awk '
+  /if \(enforceExecuteRateLimit\(res\)\)/ { limiter = NR }
+  /normalizeExecuteBody\(req.body\)/ { body = NR }
+  /new OpenAI/ { client = NR }
+  END { exit !(limiter && body && client && limiter < body && body < client) }
+' "$API"; then
+  printf '%s\n' "Execute request capacity must be enforced before parsing and provider setup." >&2
   exit 1
 fi
 
@@ -521,6 +553,23 @@ if ! grep -Fq "status: completed" "$REQUEST_TIMEOUT_PLAN" ||
   ! grep -Fq 'Downgrading the checked lockfile contract to `esbuild 0.28.0` failed' "$REQUEST_TIMEOUT_PLAN" ||
   ! grep -Fq "zero vulnerabilities" "$REQUEST_TIMEOUT_PLAN"; then
   printf '%s\n' "OpenAI request timeout plan must record completed verification." >&2
+  exit 1
+fi
+
+if ! grep -Fq "ten enabled POST attempts per process per minute" "$README" ||
+  ! grep -Fq "process-local fixed-window budget" "$ROOT_DIR/SECURITY.md" ||
+  ! grep -Fq "process-local execute request budget" "$VISION" ||
+  ! grep -Fq "Added a process-local fixed-window execute budget" "$ROOT_DIR/CHANGES.md" ||
+  ! grep -Fq "process-local execute request budget" "$ROOT_DIR/AGENTS.md"; then
+  printf '%s\n' "Project guidance must document the docs-design execute request budget." >&2
+  exit 1
+fi
+
+if ! grep -Fq "status: completed" "$EXECUTE_RATE_BUDGET_PLAN" ||
+  ! grep -Fq "Node.js 20.19.5, 22.22.2, and 24.16.0" "$EXECUTE_RATE_BUDGET_PLAN" ||
+  ! grep -Fq "hostile mutations were rejected" "$EXECUTE_RATE_BUDGET_PLAN" ||
+  ! grep -Fq "no live OpenAI" "$EXECUTE_RATE_BUDGET_PLAN"; then
+  printf '%s\n' "Docs-design execute budget plan must record completed verification." >&2
   exit 1
 fi
 

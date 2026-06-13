@@ -2,6 +2,8 @@
 
 ## 2026-06-13
 
+- Added a process-local fixed-window execute budget that rejects excess enabled
+  POST attempts with `429` and `Retry-After` before parsing or provider setup.
 - Bounded enabled OpenAI execute requests to 30 seconds and disabled automatic
   SDK retries so one interactive request has a predictable provider window.
 - Added an immutable, executable request-options contract and baseline guard.

@@ -84,7 +84,10 @@ and `npm audit --audit-level=moderate`. The execute API remains disabled unless
 validates submitted examples before calling the OpenAI SDK. Request bodies may only contain a `code` string. It rejects whitespace-only message content so
 blank prompts are not proxied. Chat message objects may only contain `role` and
 `content`. Enabled provider calls use a fixed 30-second timeout with zero SDK
-retries so one interactive request has a bounded OpenAI attempt. The build
+retries so one interactive request has a bounded OpenAI attempt. Enabled
+traffic is limited to ten enabled POST attempts per process per minute;
+exhausted windows return `429` with `Retry-After` before parsing or provider
+setup. Public multi-instance deployments still require a shared limiter. The build
 script clears the ignored .next directory before invoking
 the Webpack-backed Next build so repeated local checks do not reuse stale traces.
 GitHub Actions runs clean `npm ci` installs and `make check` on Node 20, 22,
@@ -127,6 +130,9 @@ When the required SDK or runtime is unavailable, use static checks and source re
   before reading `code`, `model`, `messages`, `role`, or `content`.
 - Enabled provider calls use a fixed 30-second timeout with zero SDK retries so
   one interactive request has a bounded OpenAI attempt.
+- Enabled traffic is limited to ten enabled POST attempts per process per minute;
+  excess attempts receive `429` with `Retry-After` before parsing or provider
+  setup. Multi-instance deployments still require shared upstream enforcement.
 - The parser test toolchain retains patched `esbuild 0.28.1` in the lockfile.
 
 ## Security and Privacy Notes
@@ -168,6 +174,8 @@ When the required SDK or runtime is unavailable, use static checks and source re
   explicit execute-route deployment interlock.
 - See `docs/plans/2026-06-13-docs-design-openai-request-timeout.md` for the
   bounded provider-call contract.
+- See `docs/plans/2026-06-13-docs-design-execute-fixed-window-budget.md` for the
+  process-local execute request budget.
 
 ## Contributing
 
