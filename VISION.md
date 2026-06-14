@@ -54,6 +54,8 @@ Current baseline:
 - Reject ambiguous multi-value content types before execute body parsing.
 - Execute API responses use `Cache-Control: no-store` to avoid intentionally
   caching submitted code, provider output, or errors.
+- Keep exact-head responsive browser, deployment, and provider evidence
+  sanitized and separate from portable package verification.
 - The parser test toolchain retains patched `esbuild 0.28.1` in the lockfile.
 - The editor sends the current code string directly and avoids logging prompt
   content, parsed parameters, or provider responses.

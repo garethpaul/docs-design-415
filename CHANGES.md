@@ -2,6 +2,9 @@
 
 ## 2026-06-14
 
+- Added an exact-head docs-design integration verification matrix that
+  separates portable checks from sanitized responsive browser, deployment,
+  and provider evidence.
 - Added a tested `Cache-Control: no-store` policy to every execute API response
   so code, model output, and route errors are not intentionally cached.
 

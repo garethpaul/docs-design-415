@@ -45,6 +45,9 @@ Helpful reports include:
   normalization, including arrays where one value names JSON.
 - Execute API responses set `Cache-Control: no-store` so submitted code,
   provider output, and route errors are not intentionally cached.
+- Responsive browser, deployment, and provider claims require the exact-head
+  integration matrix with synthetic requests and sanitized evidence; portable
+  checks do not establish public authentication or shared rate limiting.
 - The checked-in lockfile retains patched `esbuild 0.28.1` for the parser test
   runner, and the baseline rejects a regression to the vulnerable resolution.
 - GitHub Actions runs `make check` after clean installs on Node 20, 22, and 24

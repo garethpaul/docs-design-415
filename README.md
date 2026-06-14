@@ -190,6 +190,9 @@ When the required SDK or runtime is unavailable, use static checks and source re
   validation ordering before execute capacity consumption.
 - See `docs/plans/2026-06-14-docs-design-execute-no-store.md` for the execute
   response cache boundary.
+- Use [`INTEGRATION_VERIFICATION.md`](INTEGRATION_VERIFICATION.md) for
+  exact-head responsive browser, deployed route, deployment edge, and provider
+  evidence. It requires isolated synthetic requests and sanitized outcomes.
 
 ## Contributing
 

@@ -36,6 +36,8 @@ SINGLE_CONTENT_TYPE_PLAN="$ROOT_DIR/docs/plans/2026-06-13-single-json-content-ty
 PROVIDER_ELIGIBLE_BUDGET_PLAN="$ROOT_DIR/docs/plans/2026-06-13-docs-design-provider-eligible-budget.md"
 NO_STORE_PLAN="$ROOT_DIR/docs/plans/2026-06-14-docs-design-execute-no-store.md"
 MAKE_ROOT_PLAN="$ROOT_DIR/docs/plans/2026-06-14-make-root-override-protection.md"
+INTEGRATION_VERIFICATION="$ROOT_DIR/INTEGRATION_VERIFICATION.md"
+INTEGRATION_VERIFICATION_PLAN="$ROOT_DIR/docs/plans/2026-06-14-docs-design-integration-verification.md"
 CI_WORKFLOW="$ROOT_DIR/.github/workflows/check.yml"
 MAKEFILE="$ROOT_DIR/Makefile"
 
@@ -49,6 +51,7 @@ require_file() {
 
 for path in \
   "README.md" \
+  "INTEGRATION_VERIFICATION.md" \
   ".github/workflows/check.yml" \
   "CHANGES.md" \
   "Makefile" \
@@ -85,9 +88,83 @@ for path in \
   "docs/plans/2026-06-13-docs-design-provider-eligible-budget.md" \
   "docs/plans/2026-06-14-docs-design-execute-no-store.md" \
   "docs/plans/2026-06-14-make-root-override-protection.md" \
+  "docs/plans/2026-06-14-docs-design-integration-verification.md" \
   "scripts/test-execute-parser.ts" \
   "scripts/check-baseline.sh"; do
   require_file "$path"
+done
+
+for integration_contract in \
+  "Commit: pending implementation commit" \
+  "Pull request: pending" \
+  "Evidence status: not run" \
+  "isolated synthetic deployment" \
+  "Required sanitized evidence" \
+  "Use only \`pass\`, \`fail\`, \`blocked\`, or \`not run\`" \
+  "A parser test, source check, package build, or static contract cannot mark an" \
+  "No responsive browser, deployed execute route, deployment edge, or live OpenAI"; do
+  if ! grep -Fq "$integration_contract" "$INTEGRATION_VERIFICATION"; then
+    printf '%s\n' "Integration verification matrix contract is missing: $integration_contract" >&2
+    exit 1
+  fi
+done
+
+if [ "$(grep -Ec '^\| [0-9]+ \|' "$INTEGRATION_VERIFICATION")" -ne 14 ] ||
+  [ "$(grep -Ec '^\| [0-9]+ \|.*\| not run \|$' "$INTEGRATION_VERIFICATION")" -ne 14 ]; then
+  printf '%s\n' "Integration verification matrix must retain 14 explicitly not-run scenarios." >&2
+  exit 1
+fi
+
+for integration_scenario in \
+  "Isolated deployment setup" \
+  "Disabled execute route" \
+  "Missing provider configuration" \
+  "Method and media-type restrictions" \
+  "Desktop docs workspace" \
+  "Narrow docs workspace" \
+  "Valid editor submission" \
+  "Invalid editor submission" \
+  "Provider success" \
+  "Provider failure or timeout" \
+  "Response cache boundary" \
+  "Execute request budget" \
+  "Browser refresh behavior" \
+  "Public deployment controls"; do
+  if [ "$(grep -Fc "| $integration_scenario |" "$INTEGRATION_VERIFICATION")" -ne 1 ]; then
+    printf '%s\n' "Integration verification scenario is missing or duplicated: $integration_scenario" >&2
+    exit 1
+  fi
+done
+
+for integration_guidance in \
+  "INTEGRATION_VERIFICATION.md" \
+  "isolated synthetic requests" \
+  "sanitized outcomes"; do
+  if ! grep -Fq "$integration_guidance" "$README"; then
+    printf '%s\n' "README integration verification guidance is missing: $integration_guidance" >&2
+    exit 1
+  fi
+done
+
+if ! grep -Fq "Keep exact-head responsive browser, deployment, and provider evidence" "$VISION" ||
+  ! grep -Fq "Responsive browser, deployment, and provider claims require" "$ROOT_DIR/SECURITY.md" ||
+  ! grep -Fq "Added an exact-head docs-design integration verification matrix" "$ROOT_DIR/CHANGES.md"; then
+  printf '%s\n' "Project guidance must retain the docs-design integration evidence boundary." >&2
+  exit 1
+fi
+
+for integration_plan_contract in \
+  "status: completed" \
+  "## Status: Completed" \
+  "## Work Completed" \
+  "## Verification Completed" \
+  "Node.js 20.19.5 and Node.js 24.16.0" \
+  "Twelve isolated hostile documentation mutations were rejected" \
+  "all 14 integration scenarios remain"; do
+  if ! grep -Fq "$integration_plan_contract" "$INTEGRATION_VERIFICATION_PLAN"; then
+    printf '%s\n' "Integration verification plan must record completed evidence: $integration_plan_contract" >&2
+    exit 1
+  fi
 done
 
 CONTENT_TYPE_HELPER=$(awk '
