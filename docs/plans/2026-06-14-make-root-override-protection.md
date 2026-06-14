@@ -1,13 +1,13 @@
 ---
 title: Make Repository Root Override Protection
 type: reliability
-status: active
+status: completed
 date: 2026-06-14
 ---
 
 # Make Repository Root Override Protection
 
-## Status: Active
+## Status: Completed
 
 ## Problem Frame
 
@@ -45,3 +45,22 @@ untracked `/tmp/package.json` rather than the repository's pinned package gate.
 - Type-check, parser tests, clean production build, static checks, and audit
 - `git diff --check`
 - Isolated hostile assignment mutations
+
+## Work Completed
+
+- Protected the repository-derived Make root with GNU Make's `override`
+  directive while preserving `NPM` as a caller-selected executable.
+- Updated the existing six-reference root contract and registered this plan in
+  the deterministic checker.
+- Preserved the clean Next.js build and every application and package behavior.
+
+## Verification Completed
+
+- `sh -n scripts/check-baseline.sh` and the focused package check passed.
+- `make check` passed from the repository and an external working directory.
+- Full checks passed with command-line and environment `ROOT=/tmp`
+  assignments while commands continued to use the checkout.
+- Type-check, parser tests, clean production build, static checks, and
+  `npm audit --audit-level=moderate` passed with zero vulnerabilities.
+- Three isolated hostile assignment mutations were rejected: a regular
+  assignment, a conditional assignment, and a caller-directory assignment.
