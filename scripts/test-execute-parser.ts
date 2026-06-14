@@ -3,6 +3,7 @@ import type { NextApiRequest, NextApiResponse } from "next";
 import executeHandler, {
   createFixedWindowRateLimiter,
   enforceExecuteRateLimit,
+  EXECUTE_CACHE_CONTROL,
   EXECUTE_RATE_LIMIT_MAX_REQUESTS,
   EXECUTE_RATE_LIMIT_WINDOW_MS,
   extractParameters,
@@ -47,8 +48,17 @@ function parseAndNormalize(code: string) {
 
 assert.deepEqual(OPENAI_REQUEST_OPTIONS, { timeout: 30_000, maxRetries: 0 });
 assert.equal(Object.isFrozen(OPENAI_REQUEST_OPTIONS), true);
+assert.equal(EXECUTE_CACHE_CONTROL, "no-store");
 assert.equal(EXECUTE_RATE_LIMIT_MAX_REQUESTS, 10);
 assert.equal(EXECUTE_RATE_LIMIT_WINDOW_MS, 60_000);
+
+const methodResponse = createTestResponse();
+void executeHandler(
+  { method: "GET", headers: {} } as NextApiRequest,
+  methodResponse as unknown as NextApiResponse,
+);
+assert.equal(methodResponse.statusCode, 405);
+assert.equal(methodResponse.headers["Cache-Control"], EXECUTE_CACHE_CONTROL);
 
 const consumeCapacity = createFixedWindowRateLimiter(
   EXECUTE_RATE_LIMIT_MAX_REQUESTS,
@@ -104,6 +114,7 @@ try {
     invalidContentTypeResponse as unknown as NextApiResponse,
   );
   assert.equal(invalidContentTypeResponse.statusCode, 415);
+  assert.equal(invalidContentTypeResponse.headers["Cache-Control"], EXECUTE_CACHE_CONTROL);
   assert.deepEqual(invalidContentTypeResponse.body, {
     error: "Request content type must be application/json",
   });

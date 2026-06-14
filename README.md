@@ -91,6 +91,9 @@ exhausted windows return `429` with `Retry-After` before parsing or provider
 setup. Public multi-instance deployments still require a shared limiter. The build
 script clears the ignored .next directory before invoking
 the Webpack-backed Next build so repeated local checks do not reuse stale traces.
+Every execute API response sets `Cache-Control: no-store` so submitted code,
+provider output, and route errors are not intentionally retained by shared or
+browser caches.
 GitHub Actions runs clean `npm ci` installs and `make check` on Node 20, 22,
 and 24 on Ubuntu 24.04 for pushes, pull requests, and manual dispatches. The workflow pins its
 third-party actions, grants read-only repository access, and bounds each job to
@@ -136,6 +139,8 @@ When the required SDK or runtime is unavailable, use static checks and source re
   attempts per process per minute are admitted; excess eligible attempts receive
   `429` with `Retry-After` before provider setup. Multi-instance deployments
   still require shared upstream enforcement.
+- Execute API responses use `Cache-Control: no-store` so code, model output,
+  and errors are not intentionally cached.
 - Execute content-type validation rejects multi-value Content-Type headers to
   avoid ambiguous request interpretation before body normalization.
 - The parser test toolchain retains patched `esbuild 0.28.1` in the lockfile.
@@ -183,6 +188,8 @@ When the required SDK or runtime is unavailable, use static checks and source re
   process-local execute request budget.
 - See `docs/plans/2026-06-13-docs-design-provider-eligible-budget.md` for local
   validation ordering before execute capacity consumption.
+- See `docs/plans/2026-06-14-docs-design-execute-no-store.md` for the execute
+  response cache boundary.
 
 ## Contributing
 

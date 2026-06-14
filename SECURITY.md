@@ -43,6 +43,8 @@ Helpful reports include:
   authentication and rate limiting.
 - Ambiguous multi-value Content-Type headers are rejected before request-body
   normalization, including arrays where one value names JSON.
+- Execute API responses set `Cache-Control: no-store` so submitted code,
+  provider output, and route errors are not intentionally cached.
 - The checked-in lockfile retains patched `esbuild 0.28.1` for the parser test
   runner, and the baseline rejects a regression to the vulnerable resolution.
 - GitHub Actions runs `make check` after clean installs on Node 20, 22, and 24

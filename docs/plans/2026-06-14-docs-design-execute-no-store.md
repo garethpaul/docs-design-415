@@ -1,7 +1,7 @@
 ---
 title: Docs Design Execute No-Store Policy
 type: security
-status: planned
+status: completed
 date: 2026-06-14
 ---
 
@@ -33,12 +33,26 @@ browser or shared caches.
 - Modifying dependencies, lockfiles, workflows, or the editor UI.
 - Making a live OpenAI request.
 
-## Planned Verification
+## Work Completed
 
-- `npm run test:parser`
-- `npm run check`
-- `make check`
-- Isolated mutations for header placement, policy value, executable assertion,
-  static contract, documentation, and completed-plan evidence.
+- Added an exported `no-store` policy and applied it before every execute
+  handler branch.
+- Added offline assertions for the policy value and both the earliest method
+  rejection and a later content-type rejection.
+- Extended the static baseline and project guidance with route-wide cache and
+  completed-plan contracts.
+
+## Verification
+
+- Node.js 20.19.5: `npm run test:parser` passed.
+- Node.js 20.19.5: `npm run type-check` passed.
+- A clean-lockfile `npm ci` completed with zero vulnerabilities.
+- The isolated baseline passed before seven hostile mutations were rejected:
+  policy weakening, header removal, late header placement, constant-assertion
+  removal, method-branch assertion removal, documentation removal, and planned
+  status restoration.
+- Node.js 20.19.5: `make check` passed type-check, parser tests, the production
+  build, baseline contracts, and the moderate audit with zero vulnerabilities.
 - Exact intended-path, generated-artifact, whitespace, conflict-marker, and
-  changed-line credential-pattern audits.
+  changed-line credential-pattern audits passed before commit.
+- No live OpenAI request, provider credential, or deployment is used.

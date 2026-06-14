@@ -34,6 +34,7 @@ REQUEST_TIMEOUT_PLAN="$ROOT_DIR/docs/plans/2026-06-13-docs-design-openai-request
 EXECUTE_RATE_BUDGET_PLAN="$ROOT_DIR/docs/plans/2026-06-13-docs-design-execute-fixed-window-budget.md"
 SINGLE_CONTENT_TYPE_PLAN="$ROOT_DIR/docs/plans/2026-06-13-single-json-content-type.md"
 PROVIDER_ELIGIBLE_BUDGET_PLAN="$ROOT_DIR/docs/plans/2026-06-13-docs-design-provider-eligible-budget.md"
+NO_STORE_PLAN="$ROOT_DIR/docs/plans/2026-06-14-docs-design-execute-no-store.md"
 CI_WORKFLOW="$ROOT_DIR/.github/workflows/check.yml"
 MAKEFILE="$ROOT_DIR/Makefile"
 
@@ -81,6 +82,7 @@ for path in \
   "docs/plans/2026-06-13-docs-design-execute-fixed-window-budget.md" \
   "docs/plans/2026-06-13-single-json-content-type.md" \
   "docs/plans/2026-06-13-docs-design-provider-eligible-budget.md" \
+  "docs/plans/2026-06-14-docs-design-execute-no-store.md" \
   "scripts/test-execute-parser.ts" \
   "scripts/check-baseline.sh"; do
   require_file "$path"
@@ -609,6 +611,32 @@ if ! grep -Fq "status: completed" "$EXECUTE_RATE_BUDGET_PLAN" ||
   ! grep -Fq "hostile mutations were rejected" "$EXECUTE_RATE_BUDGET_PLAN" ||
   ! grep -Fq "no live OpenAI" "$EXECUTE_RATE_BUDGET_PLAN"; then
   printf '%s\n' "Docs-design execute budget plan must record completed verification." >&2
+  exit 1
+fi
+
+if ! grep -Fq 'EXECUTE_CACHE_CONTROL = "no-store"' "$API" ||
+  ! grep -Fq 'res.setHeader("Cache-Control", EXECUTE_CACHE_CONTROL)' "$API" ||
+  ! grep -Fq 'assert.equal(EXECUTE_CACHE_CONTROL, "no-store")' "$ROOT_DIR/scripts/test-execute-parser.ts" ||
+  ! grep -Fq 'methodResponse.headers["Cache-Control"], EXECUTE_CACHE_CONTROL' "$ROOT_DIR/scripts/test-execute-parser.ts" ||
+  ! grep -Fq 'headers["Cache-Control"], EXECUTE_CACHE_CONTROL' "$ROOT_DIR/scripts/test-execute-parser.ts"; then
+  printf '%s\n' "Execute API must keep the tested route-wide no-store policy." >&2
+  exit 1
+fi
+
+if ! grep -Fq "Cache-Control: no-store" "$README" ||
+  ! grep -Fq "Cache-Control: no-store" "$ROOT_DIR/SECURITY.md" ||
+  ! grep -Fq "Cache-Control: no-store" "$VISION" ||
+  ! grep -Fq "Cache-Control: no-store" "$ROOT_DIR/CHANGES.md" ||
+  ! grep -Fq "Cache-Control: no-store" "$ROOT_DIR/AGENTS.md"; then
+  printf '%s\n' "Project guidance must document the execute response cache boundary." >&2
+  exit 1
+fi
+
+if ! grep -Fq "status: completed" "$NO_STORE_PLAN" ||
+  ! grep -Fq "make check" "$NO_STORE_PLAN" ||
+  ! grep -Fq "hostile mutations were rejected" "$NO_STORE_PLAN" ||
+  ! grep -Fq "No live OpenAI" "$NO_STORE_PLAN"; then
+  printf '%s\n' "Docs-design no-store plan must record completed verification." >&2
   exit 1
 fi
 
