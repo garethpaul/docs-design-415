@@ -1,6 +1,6 @@
 # Nonblank OpenAI API Key Boundary
 
-status: planned
+status: completed
 
 ## Problem
 
@@ -42,4 +42,16 @@ before failing as a generic upstream error.
 
 ## Verification
 
-Pending implementation and bounded validation.
+- The focused execute parser and handler suite passed direct absent, blank,
+  whitespace-only, and trimmed-key cases plus the enabled valid-request 503
+  and no-store response path before the exhausted capacity limiter.
+- Seven hostile mutations were rejected for removed trimming, raw environment
+  reuse, bypassed normalization, missing helper or cache assertions,
+  documentation drift, and reopened plan status.
+- `make check` passed in an isolated complete candidate under Node.js 20.19.5
+  and Node.js 24.16.0, including type checking, parser tests, clean Next.js
+  Webpack production builds, source contracts, and zero-vulnerability audits;
+  the Node.js 20 gate also passed from an external working directory and in the
+  final worktree.
+- This change claims no responsive-browser, deployed-route, edge, or live
+  OpenAI provider execution.

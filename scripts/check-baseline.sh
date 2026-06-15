@@ -38,6 +38,7 @@ NO_STORE_PLAN="$ROOT_DIR/docs/plans/2026-06-14-docs-design-execute-no-store.md"
 MAKE_ROOT_PLAN="$ROOT_DIR/docs/plans/2026-06-14-make-root-override-protection.md"
 INTEGRATION_VERIFICATION="$ROOT_DIR/INTEGRATION_VERIFICATION.md"
 INTEGRATION_VERIFICATION_PLAN="$ROOT_DIR/docs/plans/2026-06-14-docs-design-integration-verification.md"
+NONBLANK_API_KEY_PLAN="$ROOT_DIR/docs/plans/2026-06-15-001-nonblank-openai-api-key.md"
 CI_WORKFLOW="$ROOT_DIR/.github/workflows/check.yml"
 MAKEFILE="$ROOT_DIR/Makefile"
 
@@ -360,6 +361,7 @@ for required in \
   "extractParameters" \
   "hasJsonContentType" \
   "isExecuteApiEnabled" \
+  "normalizeOpenAIApiKey" \
   "normalizeChatRequest" \
   "OPENAI_API_KEY" \
   "OPENAI_ALLOWED_MODELS" \
@@ -406,13 +408,43 @@ if ! awk '
   /hasJsonContentType\(req.headers\["content-type"\]\)/ { content_type = NR }
   /normalizeExecuteBody\(req.body\)/ { body = NR }
   /normalizeChatRequest\(extractParameters\(body.code\)\)/ { params = NR }
-  /if \(!process.env.OPENAI_API_KEY\)/ { api_key = NR }
+  /const apiKey = normalizeOpenAIApiKey\(\)/ { api_key = NR }
   /new OpenAI/ { client = NR }
   END { exit !(content_type && body && params && api_key && limiter && client && content_type < body && body < params && params < api_key && api_key < limiter && limiter < client) }
 ' "$API" ||
   ! grep -Fq "invalidContentTypeResponse.statusCode, 415" "$ROOT_DIR/scripts/test-execute-parser.ts" ||
   ! grep -Fq "currentWindow = Date.now()" "$ROOT_DIR/scripts/test-execute-parser.ts"; then
   printf '%s\n' "Execute capacity must apply after local validation and before provider setup." >&2
+  exit 1
+fi
+
+if ! grep -Fq 'export function normalizeOpenAIApiKey(value: unknown = process.env.OPENAI_API_KEY)' "$API" || \
+  ! grep -Fq 'return value.trim() || null' "$API" || \
+  ! grep -Fq 'const openai = new OpenAI({ apiKey })' "$API" || \
+  grep -Fq 'new OpenAI({ apiKey: process.env.OPENAI_API_KEY })' "$API" || \
+  ! grep -Fq 'delete process.env.OPENAI_API_KEY' "$ROOT_DIR/scripts/test-execute-parser.ts" || \
+  ! grep -Fq 'normalizeOpenAIApiKey(), null' "$ROOT_DIR/scripts/test-execute-parser.ts" || \
+  ! grep -Fq 'normalizeOpenAIApiKey("   "), null' "$ROOT_DIR/scripts/test-execute-parser.ts" || \
+  ! grep -Fq 'normalizeOpenAIApiKey("  test-api-key  "), "test-api-key"' "$ROOT_DIR/scripts/test-execute-parser.ts" || \
+  ! grep -Fq 'blankApiKeyResponse.statusCode, 503' "$ROOT_DIR/scripts/test-execute-parser.ts" || \
+  ! grep -Fq 'blankApiKeyResponse.headers["Cache-Control"], EXECUTE_CACHE_CONTROL' "$ROOT_DIR/scripts/test-execute-parser.ts"; then
+  printf '%s\n' "OpenAI API key configuration must reject blank values before execute capacity or provider setup." >&2
+  exit 1
+fi
+
+if [ ! -f "$NONBLANK_API_KEY_PLAN" ] || \
+  ! grep -Fq 'status: completed' "$NONBLANK_API_KEY_PLAN" || \
+  ! grep -Fq 'make check' "$NONBLANK_API_KEY_PLAN" || \
+  ! grep -Fq 'hostile mutations' "$NONBLANK_API_KEY_PLAN"; then
+  printf '%s\n' "Nonblank OpenAI API key plan must record completed verification." >&2
+  exit 1
+fi
+
+if ! tr '\n' ' ' < "$README" | tr -s '[:space:]' ' ' | grep -Fq 'Whitespace-only OpenAI API keys are treated as missing before execute capacity is consumed' || \
+  ! tr '\n' ' ' < "$ROOT_DIR/SECURITY.md" | tr -s '[:space:]' ' ' | grep -Fq 'Whitespace-only OpenAI API keys must be rejected before execute capacity or provider setup' || \
+  ! grep -Fq 'Rejected whitespace-only OpenAI API keys before execute capacity consumption' "$ROOT_DIR/CHANGES.md" || \
+  ! grep -Fq 'Reject blank OpenAI API keys before execute capacity consumption' "$VISION"; then
+  printf '%s\n' "Nonblank OpenAI API key documentation is incomplete." >&2
   exit 1
 fi
 
