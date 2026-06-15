@@ -379,6 +379,21 @@ assert.equal(
 
 const originalAllowedModels = process.env.OPENAI_ALLOWED_MODELS;
 try {
+  delete process.env.OPENAI_ALLOWED_MODELS;
+  assert.deepEqual(
+    parseAndNormalize(`
+      await openai.chat.completions.create({
+        model: "gpt-4o-mini",
+        messages: [{ role: "user", content: "Use default model." }]
+      });
+    `),
+    {
+      model: "gpt-4o-mini",
+      messages: [{ role: "user", content: "Use default model." }],
+      max_tokens: 512,
+    },
+  );
+
   process.env.OPENAI_ALLOWED_MODELS = "gpt-4o-mini";
   assert.equal(
     parseAndNormalize(`

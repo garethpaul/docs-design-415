@@ -538,7 +538,9 @@ fi
 if ! grep -Fq 'const configuredModelList = process.env.OPENAI_ALLOWED_MODELS;' "$API" || \
   ! grep -Fq 'if (configuredModelList === undefined)' "$API" || \
   ! grep -Fq 'return new Set(configuredModels.filter((model) => defaultAllowedModels.has(model)))' "$API" || \
-  ! grep -Fq 'for (const emptyConfiguration of ["   ", " , , "])' "$ROOT_DIR/scripts/test-execute-parser.ts"; then
+  ! grep -Fq 'for (const emptyConfiguration of ["   ", " , , "])' "$ROOT_DIR/scripts/test-execute-parser.ts" || \
+  [ "$(grep -Fc 'delete process.env.OPENAI_ALLOWED_MODELS;' "$ROOT_DIR/scripts/test-execute-parser.ts")" -lt 2 ] || \
+  ! grep -Fq 'content: "Use default model."' "$ROOT_DIR/scripts/test-execute-parser.ts"; then
   printf '%s\n' "Explicit empty model configuration must fail closed with parser coverage." >&2
   exit 1
 fi
