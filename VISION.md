@@ -61,6 +61,7 @@ Current baseline:
 - The parser test toolchain retains patched `esbuild 0.28.1` in the lockfile.
 - The editor sends the current code string directly and avoids logging prompt
   content, parsed parameters, or provider responses.
+- Keep the executable sample on the CodeMirror JavaScript extension with TypeScript parsing enabled so its editor grammar matches execute parsing.
 - The execute API rejects whitespace-only message content before proxying.
 - Verify Unicode message whitespace rejection without trimming accepted content.
 

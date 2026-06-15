@@ -41,6 +41,7 @@ INTEGRATION_VERIFICATION_PLAN="$ROOT_DIR/docs/plans/2026-06-14-docs-design-integ
 NONBLANK_API_KEY_PLAN="$ROOT_DIR/docs/plans/2026-06-15-001-nonblank-openai-api-key.md"
 EMPTY_MODEL_ALLOWLIST_PLAN="$ROOT_DIR/docs/plans/2026-06-15-explicit-empty-model-allowlist.md"
 MESSAGE_WHITESPACE_CONTRACT_PLAN="$ROOT_DIR/docs/plans/2026-06-15-message-whitespace-contract.md"
+EDITOR_JAVASCRIPT_PLAN="$ROOT_DIR/docs/plans/2026-06-15-editor-javascript-language.md"
 CI_WORKFLOW="$ROOT_DIR/.github/workflows/check.yml"
 MAKEFILE="$ROOT_DIR/Makefile"
 
@@ -93,6 +94,7 @@ for path in \
   "docs/plans/2026-06-14-make-root-override-protection.md" \
   "docs/plans/2026-06-14-docs-design-integration-verification.md" \
   "docs/plans/2026-06-15-explicit-empty-model-allowlist.md" \
+  "docs/plans/2026-06-15-editor-javascript-language.md" \
   "docs/plans/2026-06-15-message-whitespace-contract.md" \
   "scripts/test-execute-parser.ts" \
   "scripts/check-baseline.sh"; do
@@ -333,10 +335,22 @@ for (const [name, version] of Object.entries({
   react: "19.2.7",
   "react-dom": "19.2.7",
   "@codemirror/lint": "6.9.7",
+  "@codemirror/lang-javascript": "6.2.5",
 })) {
   if (pkg.dependencies?.[name] !== version) {
     throw new Error(`package.json must pin ${name} ${version}`);
   }
+}
+if (pkg.dependencies?.["@codemirror/lang-python"] !== undefined) {
+  throw new Error("package.json must not retain the Python language extension");
+}
+if (lock.packages?.[""]?.dependencies?.["@codemirror/lang-javascript"] !== "6.2.5" ||
+    lock.packages?.["node_modules/@codemirror/lang-javascript"]?.version !== "6.2.5") {
+  throw new Error("package-lock.json must pin @codemirror/lang-javascript 6.2.5");
+}
+if (lock.packages?.[""]?.dependencies?.["@codemirror/lang-python"] !== undefined ||
+    lock.packages?.["node_modules/@codemirror/lang-python"] !== undefined) {
+  throw new Error("package-lock.json must not retain the direct Python language extension");
 }
 if (pkg.scripts.audit !== "npm audit --audit-level=moderate") {
   throw new Error("package.json must keep the moderate-severity audit gate");
@@ -591,6 +605,30 @@ fi
 
 if ! grep -Fq "body: JSON.stringify({ code: codeContent })" "$EDITOR"; then
   printf '%s\n' "Editor must post the current code content to the execute API." >&2
+  exit 1
+fi
+
+if ! grep -Fq 'import { javascript } from "@codemirror/lang-javascript";' "$EDITOR" || \
+  [ "$(grep -Fc 'extensions={[javascript({ typescript: true })]}' "$EDITOR")" -ne 2 ] || \
+  grep -Fq '@codemirror/lang-python' "$EDITOR" || \
+  grep -Fq 'python()' "$EDITOR"; then
+  printf '%s\n' "Editor must use the JavaScript CodeMirror extension with TypeScript parsing." >&2
+  exit 1
+fi
+
+if ! grep -Fq 'status: completed' "$EDITOR_JAVASCRIPT_PLAN" || \
+  ! grep -Fq 'make check' "$EDITOR_JAVASCRIPT_PLAN" || \
+  ! grep -Fq 'hostile mutations were rejected' "$EDITOR_JAVASCRIPT_PLAN" || \
+  ! grep -Fq 'external working directory' "$EDITOR_JAVASCRIPT_PLAN"; then
+  printf '%s\n' "Editor JavaScript language plan must record completed verification." >&2
+  exit 1
+fi
+
+if ! grep -Fq 'CodeMirror JavaScript extension with TypeScript parsing enabled' "$README" || \
+  ! grep -Fq 'CodeMirror JavaScript extension with TypeScript parsing enabled' "$ROOT_DIR/AGENTS.md" || \
+  ! grep -Fq 'CodeMirror JavaScript extension with TypeScript parsing enabled' "$VISION" || \
+  ! grep -Fq 'Aligned the executable docs editor with the CodeMirror JavaScript extension' "$ROOT_DIR/CHANGES.md"; then
+  printf '%s\n' "Project guidance must document the executable editor language contract." >&2
   exit 1
 fi
 

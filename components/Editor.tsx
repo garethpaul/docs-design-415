@@ -1,5 +1,5 @@
 import CodeMirror from "@uiw/react-codemirror";
-import { python } from "@codemirror/lang-python";
+import { javascript } from "@codemirror/lang-javascript";
 import { createTheme } from "@uiw/codemirror-themes";
 import { tags as t } from "@lezer/highlight";
 import { Button } from "@radix-ui/themes";
@@ -36,7 +36,7 @@ const myTheme = createTheme({
   ],
 });
 
-const pyLang = `import OpenAI from 'openai';
+const defaultCode = `import OpenAI from 'openai';
 
 const openai = new OpenAI();
 
@@ -53,7 +53,7 @@ async function main() {
 main();`;
 
 export default function Editor() {
-  const [codeContent, setCodeContent] = useState(pyLang);
+  const [codeContent, setCodeContent] = useState(defaultCode);
   const [result, setResult] = useState<unknown>(null);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -89,7 +89,7 @@ export default function Editor() {
       <CodeMirror
         value={codeContent}
         theme={myTheme}
-        extensions={[python()]}
+        extensions={[javascript({ typescript: true })]}
         onChange={(value) => {
           setCodeContent(value);
         }}
@@ -128,7 +128,7 @@ export default function Editor() {
         <CodeMirror
           value={formattedResult}
           theme={myTheme}
-          extensions={[python()]}
+          extensions={[javascript({ typescript: true })]}
           readOnly
         />
       )}

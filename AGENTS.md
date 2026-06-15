@@ -36,6 +36,7 @@
 - Language mix noted in the README: React TSX (9), TypeScript (1).
 - Use Node >=20.9.0 for package scripts.
 - Preserve the split documentation/editor layout and verify visible component changes in a browser when possible.
+- Keep the executable sample on the CodeMirror JavaScript extension with TypeScript parsing enabled; its source is parsed as JavaScript/TypeScript by the execute API.
 - Next.js routes, pages, and API handlers should stay aligned with the existing app structure.
 
 ## Testing guidance

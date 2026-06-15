@@ -103,6 +103,7 @@ third-party actions, grants read-only repository access, and bounds each job to
 15 minutes. It does not persist checkout credentials in the job workspace.
 The lockfile retains `esbuild 0.28.1` for the `tsx` parser test runner so the
 moderate-severity audit gate rejects the vulnerable 0.28.0 resolution.
+The executable sample uses the CodeMirror JavaScript extension with TypeScript parsing enabled so editor highlighting matches the source accepted by the execute API.
 
 The `/docs` workspace retains its 250-pixel navigation rail and split intro/editor
 layout on desktop. At 900 pixels and below, the sidebar becomes a bounded

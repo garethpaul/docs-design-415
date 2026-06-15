@@ -2,6 +2,8 @@
 
 ## 2026-06-15
 
+- Aligned the executable docs editor with the CodeMirror JavaScript extension
+  and enabled TypeScript-compatible parsing.
 - Added Unicode whitespace and accepted-content preservation regressions for
   execute messages.
 - Made explicitly empty model allowlists fail closed instead of restoring

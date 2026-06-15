@@ -1,7 +1,7 @@
 ---
 title: Editor JavaScript Language Alignment
 type: fix
-status: planned
+status: completed
 date: 2026-06-15
 ---
 
@@ -70,7 +70,21 @@ completed verification evidence.
 
 ## Completion Evidence
 
-- Pending implementation and verification.
+- Replaced the Python CodeMirror extension with
+  `@codemirror/lang-javascript` 6.2.5 and enabled TypeScript-compatible parsing
+  for both editor instances without changing the sample or execute request.
+- `npm ci --ignore-scripts`, `npm run type-check`, `npm run test:parser`, and
+  `npm run build` passed on Node 20.19.5.
+- The baseline checker passed from an external working directory against the
+  completed implementation fixture.
+- Six isolated hostile mutations were rejected for the editor import,
+  TypeScript parsing option, manifest version, lockfile version, guidance, and
+  plan status.
+- `make check` passed from both the repository and an external working
+  directory, including TypeScript, parser, production build, baseline, and
+  moderate-severity audit gates with zero vulnerabilities.
+- Browser automation was not run because the required `agent-browser` CLI is
+  not installed; the production build rendered the `/docs` route successfully.
 
 ## Scope Boundaries
 
