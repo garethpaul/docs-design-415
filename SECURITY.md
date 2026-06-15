@@ -45,6 +45,8 @@ Helpful reports include:
   provider setup.
 - Explicitly empty model allowlists must fail closed; built-in defaults apply
   only when `OPENAI_ALLOWED_MODELS` is absent.
+- Unicode whitespace rejection and accepted-content preservation must remain
+  covered for execute messages so blank prompts cannot consume provider capacity.
 - Ambiguous multi-value Content-Type headers are rejected before request-body
   normalization, including arrays where one value names JSON.
 - Execute API responses set `Cache-Control: no-store` so submitted code,

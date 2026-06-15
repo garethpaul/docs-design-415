@@ -309,6 +309,28 @@ assert.equal(
   null,
 );
 
+for (const blankContent of ["", "   ", "\t\n", "\u00a0", "\ufeff"] as const) {
+  assert.equal(
+    normalizeChatRequest({
+      model: "gpt-4o-mini",
+      messages: [{ role: "user", content: blankContent }],
+    }),
+    null,
+  );
+}
+
+assert.deepEqual(
+  normalizeChatRequest({
+    model: "gpt-4o-mini",
+    messages: [{ role: "user", content: "  Keep this spacing.  " }],
+  }),
+  {
+    model: "gpt-4o-mini",
+    messages: [{ role: "user", content: "  Keep this spacing.  " }],
+    max_tokens: 512,
+  },
+);
+
 assert.equal(
   parseAndNormalize(`
     await openai.chat.completions.create({

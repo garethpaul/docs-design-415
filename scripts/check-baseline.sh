@@ -40,6 +40,7 @@ INTEGRATION_VERIFICATION="$ROOT_DIR/INTEGRATION_VERIFICATION.md"
 INTEGRATION_VERIFICATION_PLAN="$ROOT_DIR/docs/plans/2026-06-14-docs-design-integration-verification.md"
 NONBLANK_API_KEY_PLAN="$ROOT_DIR/docs/plans/2026-06-15-001-nonblank-openai-api-key.md"
 EMPTY_MODEL_ALLOWLIST_PLAN="$ROOT_DIR/docs/plans/2026-06-15-explicit-empty-model-allowlist.md"
+MESSAGE_WHITESPACE_CONTRACT_PLAN="$ROOT_DIR/docs/plans/2026-06-15-message-whitespace-contract.md"
 CI_WORKFLOW="$ROOT_DIR/.github/workflows/check.yml"
 MAKEFILE="$ROOT_DIR/Makefile"
 
@@ -92,6 +93,7 @@ for path in \
   "docs/plans/2026-06-14-make-root-override-protection.md" \
   "docs/plans/2026-06-14-docs-design-integration-verification.md" \
   "docs/plans/2026-06-15-explicit-empty-model-allowlist.md" \
+  "docs/plans/2026-06-15-message-whitespace-contract.md" \
   "scripts/test-execute-parser.ts" \
   "scripts/check-baseline.sh"; do
   require_file "$path"
@@ -871,6 +873,32 @@ if ! grep -Fq "own request, parameter, and message fields" "$README"; then
   printf '%s\n' "README must document own-field execute API validation." >&2
   exit 1
 fi
+
+if ! grep -Fq 'content.trim().length === 0' "$API" ||
+  ! grep -Fq 'for (const blankContent of ["", "   ", "\t\n", "\u00a0", "\ufeff"] as const)' "$ROOT_DIR/scripts/test-execute-parser.ts" ||
+  ! grep -Fq 'content: "  Keep this spacing.  "' "$ROOT_DIR/scripts/test-execute-parser.ts"; then
+  printf '%s\n' "Execute message whitespace rejection and preservation coverage is incomplete." >&2
+  exit 1
+fi
+
+if ! grep -Fq "ASCII and Unicode whitespace-only message content" "$README" ||
+  ! grep -Fq "Unicode whitespace rejection and accepted-content preservation" "$ROOT_DIR/SECURITY.md" ||
+  ! grep -Fq "Verify Unicode message whitespace rejection" "$VISION" ||
+  ! grep -Fq "Added Unicode whitespace and accepted-content preservation regressions" "$ROOT_DIR/CHANGES.md"; then
+  printf '%s\n' "Project guidance must document the message whitespace verification contract." >&2
+  exit 1
+fi
+
+for message_whitespace_contract in \
+  "status: completed" \
+  "## Status: Completed" \
+  "## Verification Completed" \
+  "hostile mutations were rejected"; do
+  if ! grep -Fq "$message_whitespace_contract" "$MESSAGE_WHITESPACE_CONTRACT_PLAN"; then
+    printf '%s\n' "Message whitespace contract plan must record completed evidence: $message_whitespace_contract" >&2
+    exit 1
+  fi
+done
 
 if ! grep -Fq "check: verify" "$ROOT_DIR/Makefile"; then
   printf '%s\n' "Makefile must expose make check as the repository verification wrapper." >&2

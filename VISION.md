@@ -62,6 +62,7 @@ Current baseline:
 - The editor sends the current code string directly and avoids logging prompt
   content, parsed parameters, or provider responses.
 - The execute API rejects whitespace-only message content before proxying.
+- Verify Unicode message whitespace rejection without trimming accepted content.
 
 Next priorities:
 

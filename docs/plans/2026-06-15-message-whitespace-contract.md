@@ -1,7 +1,7 @@
 ---
 title: Execute Message Whitespace Contract
 type: testing
-status: in_progress
+status: completed
 date: 2026-06-15
 execution: code
 ---
@@ -87,4 +87,24 @@ Approach:
 - The tests intentionally follow JavaScript `String.prototype.trim()` Unicode
   semantics rather than defining a separate whitespace table.
 
-## Status: In Progress
+## Status: Completed
+
+## Work Completed
+
+- Added direct rejection coverage for empty, ASCII whitespace, non-breaking
+  space, and byte-order-mark-only execute messages.
+- Added a preservation regression proving accepted content retains its original
+  surrounding whitespace.
+- Added static, documentation, and completed-plan contracts without changing
+  the existing runtime predicate.
+
+## Verification Completed
+
+- The focused execute parser suite and TypeScript type-check passed.
+- Node.js 20.19.5 repository and external-directory `make check` passed the
+  parser suite, Webpack-backed Next.js 16.2.9 production build, source baseline,
+  and npm audit with zero vulnerabilities.
+- Five isolated hostile mutations were rejected for runtime guard, Unicode
+  regression, preservation regression, documentation, and completion-evidence
+  removal.
+- No browser, deployed route, or live OpenAI request was executed.

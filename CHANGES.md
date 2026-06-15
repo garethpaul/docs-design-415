@@ -2,6 +2,8 @@
 
 ## 2026-06-15
 
+- Added Unicode whitespace and accepted-content preservation regressions for
+  execute messages.
 - Made explicitly empty model allowlists fail closed instead of restoring
   built-in defaults.
 - Rejected whitespace-only OpenAI API keys before execute capacity consumption.

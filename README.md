@@ -82,8 +82,9 @@ and `npm audit --audit-level=moderate`. The execute API remains disabled unless
 `DOCS_EXECUTE_ENABLED=true` and requires `OPENAI_API_KEY` at runtime. It accepts
 `Content-Type: application/json` requests only, rejects multi-value Content-Type
 headers, and validates submitted examples before calling the OpenAI SDK.
-Request bodies may only contain a `code` string. It rejects whitespace-only message content so
-blank prompts are not proxied. Chat message objects may only contain `role` and
+Request bodies may only contain a `code` string. It rejects ASCII and Unicode whitespace-only message content so
+blank prompts are not proxied, while accepted content retains its original
+spacing. Chat message objects may only contain `role` and
 `content`. Enabled provider calls use a fixed 30-second timeout with zero SDK
 retries so one interactive request has a bounded OpenAI attempt. Enabled
 traffic is limited to ten enabled POST attempts per process per minute;
