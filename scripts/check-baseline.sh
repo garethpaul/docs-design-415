@@ -619,6 +619,9 @@ fi
 if ! grep -Fq 'status: completed' "$EDITOR_JAVASCRIPT_PLAN" || \
   ! grep -Fq 'make check' "$EDITOR_JAVASCRIPT_PLAN" || \
   ! grep -Fq 'hostile mutations were rejected' "$EDITOR_JAVASCRIPT_PLAN" || \
+  ! grep -Fq '8416c6dab5b4bf88cf2c9ded7b1349ddf2acf433' "$EDITOR_JAVASCRIPT_PLAN" || \
+  ! grep -Fq 'push run `27542936590`' "$EDITOR_JAVASCRIPT_PLAN" || \
+  ! grep -Fq 'pull-request run `27542942739`' "$EDITOR_JAVASCRIPT_PLAN" || \
   ! grep -Fq 'external working directory' "$EDITOR_JAVASCRIPT_PLAN"; then
   printf '%s\n' "Editor JavaScript language plan must record completed verification." >&2
   exit 1

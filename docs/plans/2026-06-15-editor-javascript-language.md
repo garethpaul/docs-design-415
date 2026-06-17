@@ -83,6 +83,13 @@ completed verification evidence.
 - `make check` passed from both the repository and an external working
   directory, including TypeScript, parser, production build, baseline, and
   moderate-severity audit gates with zero vulnerabilities.
+- The implementation was committed as
+  `8416c6dab5b4bf88cf2c9ded7b1349ddf2acf433`.
+- Canonical hosted verification passed on that exact implementation head:
+  push run `27542936590` and pull-request run `27542942739` each completed
+  successfully across Node.js 20, 22, and 24. Both Vercel checks also passed,
+  PR #15 remained open, clean, and mergeable, and the branch had no open
+  code-scanning alerts.
 - Browser automation was not run because the required `agent-browser` CLI is
   not installed; the production build rendered the `/docs` route successfully.
 
