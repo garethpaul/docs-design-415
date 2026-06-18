@@ -1,5 +1,11 @@
 # Changes
 
+## 2026-06-18
+
+- Refreshed four compatible direct dependencies while preserving Node 20,
+  TypeScript 5.9, patched esbuild, editor language behavior, and the complete
+  webpack production gate.
+
 ## 2026-06-15
 
 - Aligned the executable docs editor with the CodeMirror JavaScript extension

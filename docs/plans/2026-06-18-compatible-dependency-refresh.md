@@ -1,6 +1,6 @@
 # Refresh Compatible JavaScript Dependencies
 
-## Status: Planned
+## Status: Completed
 
 ## Problem
 
@@ -72,3 +72,32 @@ verification evidence.
 - TypeScript 6 and `@types/node` 25 remain intentionally deferred because they
   cross compiler or supported-runtime boundaries.
 - This change is stacked on PR #15, which must remain open and merge first.
+
+## Work Completed
+
+- Updated `@codemirror/search` to 6.7.1, both reviewed Radix components to their
+  compatible releases, and OpenAI to 6.44.0.
+- Regenerated the npm lockfile through the structured resolver and retained the
+  patched esbuild 0.28.1 resolution.
+- Extended the structured manifest/lockfile baseline for all four reviewed
+  versions and synchronized the change history.
+- TypeScript 6 and @types/node 25 remain intentionally deferred because they
+  cross compiler and supported-runtime boundaries.
+
+## Verification Completed
+
+- Node.js 20.19.5, 22.22.2, and 24.16.0 each passed TypeScript type-checking,
+  execute parser tests, and the Next.js 16.2.9 webpack production build,
+  including the `/docs` route.
+- Fresh lockfile installs and `npm audit --audit-level=moderate` reported zero
+  vulnerabilities on all three available Node runtimes.
+- Repository and external-directory `make check` passed the complete package
+  gate with explicit timeouts.
+- Eight isolated dependency-contract mutations were rejected: each of the four
+  direct package pins, a reviewed direct lockfile resolution, the esbuild
+  lockfile resolution, plan status, and verification evidence.
+- Exact diff, generated-artifact, untracked-file, credential-shaped addition,
+  conflict-marker, binary, file-mode, and whitespace audits passed before
+  commit.
+- No live OpenAI request, deployed route, proxy, or browser execution was
+  performed.

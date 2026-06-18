@@ -42,6 +42,7 @@ NONBLANK_API_KEY_PLAN="$ROOT_DIR/docs/plans/2026-06-15-001-nonblank-openai-api-k
 EMPTY_MODEL_ALLOWLIST_PLAN="$ROOT_DIR/docs/plans/2026-06-15-explicit-empty-model-allowlist.md"
 MESSAGE_WHITESPACE_CONTRACT_PLAN="$ROOT_DIR/docs/plans/2026-06-15-message-whitespace-contract.md"
 EDITOR_JAVASCRIPT_PLAN="$ROOT_DIR/docs/plans/2026-06-15-editor-javascript-language.md"
+DEPENDENCY_REFRESH_PLAN="$ROOT_DIR/docs/plans/2026-06-18-compatible-dependency-refresh.md"
 CI_WORKFLOW="$ROOT_DIR/.github/workflows/check.yml"
 MAKEFILE="$ROOT_DIR/Makefile"
 
@@ -95,6 +96,7 @@ for path in \
   "docs/plans/2026-06-14-docs-design-integration-verification.md" \
   "docs/plans/2026-06-15-explicit-empty-model-allowlist.md" \
   "docs/plans/2026-06-15-editor-javascript-language.md" \
+  "docs/plans/2026-06-18-compatible-dependency-refresh.md" \
   "docs/plans/2026-06-15-message-whitespace-contract.md" \
   "scripts/test-execute-parser.ts" \
   "scripts/check-baseline.sh"; do
@@ -330,8 +332,19 @@ if (pkg.overrides["@babel/runtime"] !== "7.29.7" || pkg.overrides["form-data"] !
   throw new Error("package.json must override vulnerable transitive parser/API dependencies");
 }
 for (const [name, version] of Object.entries({
+  "@codemirror/search": "6.7.1",
+  "@radix-ui/react-menubar": "1.1.18",
+  "@radix-ui/react-navigation-menu": "1.2.16",
+  openai: "6.44.0",
+})) {
+  if (pkg.dependencies?.[name] !== version ||
+      lock.packages?.[`node_modules/${name}`]?.version !== version) {
+    throw new Error(`package.json and package-lock.json must pin ${name} ${version}`);
+  }
+}
+for (const [name, version] of Object.entries({
   next: "16.2.9",
-  openai: "6.42.0",
+  openai: "6.44.0",
   react: "19.2.7",
   "react-dom": "19.2.7",
   "@codemirror/lint": "6.9.7",
@@ -359,6 +372,20 @@ if (lock.packages?.["node_modules/esbuild"]?.version !== "0.28.1") {
   throw new Error("package-lock.json must retain patched esbuild 0.28.1");
 }
 NODE
+
+for dependency_plan_contract in \
+  "## Status: Completed" \
+  "## Work Completed" \
+  "## Verification Completed" \
+  "\`@codemirror/search\` to 6.7.1" \
+  "OpenAI to 6.44.0" \
+  "TypeScript 6 and @types/node 25 remain intentionally deferred" \
+  "Eight isolated dependency-contract mutations were rejected"; do
+  if ! grep -Fq "$dependency_plan_contract" "$DEPENDENCY_REFRESH_PLAN"; then
+    printf '%s\n' "Dependency refresh plan must record completed evidence: $dependency_plan_contract" >&2
+    exit 1
+  fi
+done
 
 if grep -Fq "code.match(" "$API" || grep -Fq "JSON.parse(formattedStr)" "$API"; then
   printf '%s\n' "execute API must not parse OpenAI calls with regex/string JSON munging." >&2
