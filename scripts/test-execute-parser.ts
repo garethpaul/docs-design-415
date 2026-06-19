@@ -73,6 +73,7 @@ assert.equal(normalizeOpenAIApiKey("  test-api-key  "), "test-api-key");
 assert.equal(normalizeExecuteApiToken(null), null);
 assert.equal(normalizeExecuteApiToken("   "), null);
 assert.equal(normalizeExecuteApiToken("token with spaces"), null);
+assert.equal(normalizeExecuteApiToken("x".repeat(257)), null);
 assert.equal(normalizeExecuteApiToken("  test-execute-token  "), "test-execute-token");
 
 const methodResponse = createTestResponse();

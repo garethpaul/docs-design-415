@@ -484,8 +484,9 @@ if ! awk '
 fi
 
 if ! grep -Fq 'export function normalizeExecuteApiToken(value: unknown = process.env.EXECUTE_API_TOKEN)' "$API" || \
-  ! grep -Fq 'createHash("sha256").update(providedToken).digest()' "$API" || \
-  ! grep -Fq 'timingSafeEqual(providedDigest, expectedDigest)' "$API" || \
+  ! grep -Fq 'Buffer.alloc(MAX_EXECUTE_API_TOKEN_LENGTH + 2)' "$API" || \
+  ! grep -Fq 'writeUInt16BE(providedToken.length, MAX_EXECUTE_API_TOKEN_LENGTH)' "$API" || \
+  ! grep -Fq 'timingSafeEqual(providedBuffer, expectedBuffer)' "$API" || \
   ! grep -Fq 'Bearer realm="docs-execute"' "$API" || \
   ! grep -Fq 'missingTokenResponse.statusCode, 503' "$ROOT_DIR/scripts/test-execute-parser.ts" || \
   ! grep -Fq 'unauthorizedResponse.statusCode, 401' "$ROOT_DIR/scripts/test-execute-parser.ts" || \

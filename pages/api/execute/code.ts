@@ -2,7 +2,7 @@ import type { NextApiRequest, NextApiResponse } from "next";
 import OpenAI from "openai";
 import { parse } from "@babel/parser";
 import traverse from "@babel/traverse";
-import { createHash, timingSafeEqual } from "node:crypto";
+import { timingSafeEqual } from "node:crypto";
 import type {
   ArrayExpression,
   Expression,
@@ -36,6 +36,7 @@ const MAX_MESSAGES = 20;
 const MAX_MESSAGE_CONTENT_LENGTH = 8000;
 const MAX_COMPLETION_TOKENS = 2048;
 const DEFAULT_COMPLETION_TOKENS = 512;
+const MAX_EXECUTE_API_TOKEN_LENGTH = 256;
 export const EXECUTE_RATE_LIMIT_MAX_REQUESTS = 10;
 export const EXECUTE_RATE_LIMIT_WINDOW_MS = 60_000;
 export const EXECUTE_CACHE_CONTROL = "no-store";
@@ -314,7 +315,11 @@ export function normalizeExecuteApiToken(value: unknown = process.env.EXECUTE_AP
   }
 
   const token = value.trim();
-  return token !== "" && /^[\x21-\x7e]+$/.test(token) ? token : null;
+  return token !== "" &&
+    token.length <= MAX_EXECUTE_API_TOKEN_LENGTH &&
+    /^[\x21-\x7e]+$/.test(token)
+    ? token
+    : null;
 }
 
 function bearerToken(authorization: HeaderValue) {
@@ -322,14 +327,18 @@ function bearerToken(authorization: HeaderValue) {
     return null;
   }
 
-  const match = /^Bearer ([\x21-\x7e]+)$/.exec(authorization);
+  const match = /^Bearer ([\x21-\x7e]{1,256})$/.exec(authorization);
   return match?.[1] ?? null;
 }
 
 function tokensMatch(providedToken: string, expectedToken: string) {
-  const providedDigest = createHash("sha256").update(providedToken).digest();
-  const expectedDigest = createHash("sha256").update(expectedToken).digest();
-  return timingSafeEqual(providedDigest, expectedDigest);
+  const providedBuffer = Buffer.alloc(MAX_EXECUTE_API_TOKEN_LENGTH + 2);
+  const expectedBuffer = Buffer.alloc(MAX_EXECUTE_API_TOKEN_LENGTH + 2);
+  providedBuffer.write(providedToken, 0, MAX_EXECUTE_API_TOKEN_LENGTH, "ascii");
+  expectedBuffer.write(expectedToken, 0, MAX_EXECUTE_API_TOKEN_LENGTH, "ascii");
+  providedBuffer.writeUInt16BE(providedToken.length, MAX_EXECUTE_API_TOKEN_LENGTH);
+  expectedBuffer.writeUInt16BE(expectedToken.length, MAX_EXECUTE_API_TOKEN_LENGTH);
+  return timingSafeEqual(providedBuffer, expectedBuffer);
 }
 
 function isAuthorized(authorization: HeaderValue, expectedToken: string) {
