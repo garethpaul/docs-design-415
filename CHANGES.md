@@ -1,5 +1,14 @@
 # Changes
 
+## 2026-06-19
+
+- Added fail-closed bearer authentication and a non-persistent editor token field
+  for the spend-capable execute route.
+- Rejected parameterized duplicate Content-Type values and format-control-only
+  chat messages before provider admission.
+- Aborted in-flight OpenAI requests when the client connection closes and added
+  focused provider plus built-server live HTTP regressions.
+
 ## 2026-06-18
 
 - Refreshed four compatible direct dependencies while preserving Node 20,

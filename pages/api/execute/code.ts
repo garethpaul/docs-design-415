@@ -2,6 +2,7 @@ import type { NextApiRequest, NextApiResponse } from "next";
 import OpenAI from "openai";
 import { parse } from "@babel/parser";
 import traverse from "@babel/traverse";
+import { createHash, timingSafeEqual } from "node:crypto";
 import type {
   ArrayExpression,
   Expression,
@@ -280,13 +281,19 @@ function allowedModels() {
 }
 
 export function hasJsonContentType(contentType: HeaderValue): boolean {
-  if (typeof contentType !== "string") {
+  if (typeof contentType !== "string" || contentType.includes(",")) {
     return false;
   }
 
   return (
     contentType.split(";")[0].trim().toLowerCase() === "application/json"
   );
+}
+
+function hasVisibleMessageContent(content: string) {
+  return content
+    .replace(/[\u00ad\u061c\u180e\u200b-\u200f\u202a-\u202e\u2060-\u206f\ufeff\ufff9-\ufffb]/g, "")
+    .trim().length > 0;
 }
 
 export function isExecuteApiEnabled(value = process.env.DOCS_EXECUTE_ENABLED): boolean {
@@ -299,6 +306,35 @@ export function normalizeOpenAIApiKey(value: unknown = process.env.OPENAI_API_KE
   }
 
   return value.trim() || null;
+}
+
+export function normalizeExecuteApiToken(value: unknown = process.env.EXECUTE_API_TOKEN) {
+  if (typeof value !== "string") {
+    return null;
+  }
+
+  const token = value.trim();
+  return token !== "" && /^[\x21-\x7e]+$/.test(token) ? token : null;
+}
+
+function bearerToken(authorization: HeaderValue) {
+  if (typeof authorization !== "string") {
+    return null;
+  }
+
+  const match = /^Bearer ([\x21-\x7e]+)$/.exec(authorization);
+  return match?.[1] ?? null;
+}
+
+function tokensMatch(providedToken: string, expectedToken: string) {
+  const providedDigest = createHash("sha256").update(providedToken).digest();
+  const expectedDigest = createHash("sha256").update(expectedToken).digest();
+  return timingSafeEqual(providedDigest, expectedDigest);
+}
+
+function isAuthorized(authorization: HeaderValue, expectedToken: string) {
+  const providedToken = bearerToken(authorization);
+  return providedToken !== null && tokensMatch(providedToken, expectedToken);
 }
 
 export function normalizeExecuteBody(body: unknown): ExecuteBody | null {
@@ -361,7 +397,7 @@ function normalizeMessages(value: JsonValue | undefined): ChatMessage[] | null {
       !ALLOWED_MESSAGE_ROLES.has(role) ||
       typeof content !== "string" ||
       content.length === 0 ||
-      content.trim().length === 0 ||
+      !hasVisibleMessageContent(content) ||
       content.length > MAX_MESSAGE_CONTENT_LENGTH
     ) {
       return null;
@@ -498,6 +534,16 @@ export default async function handler(
     return res.status(503).json({ error: "Execute API is disabled" });
   }
 
+  const executeApiToken = normalizeExecuteApiToken();
+  if (!executeApiToken) {
+    return res.status(503).json({ error: "Execute API authentication is not configured" });
+  }
+
+  if (!isAuthorized(req.headers.authorization, executeApiToken)) {
+    res.setHeader("WWW-Authenticate", 'Bearer realm="docs-execute"');
+    return res.status(401).json({ error: "Unauthorized" });
+  }
+
   if (!hasJsonContentType(req.headers["content-type"])) {
     return res.status(415).json({ error: "Request content type must be application/json" });
   }
@@ -527,14 +573,36 @@ export default async function handler(
     return;
   }
 
+  const requestAbortController = new AbortController();
+  const abortProviderRequest = () => requestAbortController.abort();
+  const abortWhenResponseCloses = () => {
+    if (!res.writableEnded) {
+      abortProviderRequest();
+    }
+  };
+  if (req.aborted) {
+    abortProviderRequest();
+  } else {
+    req.once("aborted", abortProviderRequest);
+    res.once("close", abortWhenResponseCloses);
+    req.socket.once("close", abortWhenResponseCloses);
+  }
+
   try {
     const openai = new OpenAI({ apiKey });
     const completion = await openai.chat.completions.create(
       params as ChatCompletionCreateParamsNonStreaming,
-      OPENAI_REQUEST_OPTIONS,
+      { ...OPENAI_REQUEST_OPTIONS, signal: requestAbortController.signal },
     );
     return res.status(200).json(completion.choices);
   } catch {
+    if (requestAbortController.signal.aborted || req.aborted) {
+      return;
+    }
     return res.status(502).json({ error: "OpenAI request failed" });
+  } finally {
+    req.off("aborted", abortProviderRequest);
+    res.off("close", abortWhenResponseCloses);
+    req.socket.off("close", abortWhenResponseCloses);
   }
 }

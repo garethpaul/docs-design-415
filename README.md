@@ -41,6 +41,8 @@ git clone https://github.com/garethpaul/docs-design-415.git
 cd docs-design-415
 npm ci
 export OPENAI_API_KEY=sk-...
+# Server-only shared bearer token; enter the same value in the editor when testing.
+export EXECUTE_API_TOKEN=replace-with-a-long-random-token
 # Explicitly enable the spend-capable execute route for local testing.
 export DOCS_EXECUTE_ENABLED=true
 # Optional: comma-separated allow-list for proxied chat models.
@@ -61,8 +63,10 @@ Detected npm scripts:
 - `npm run check` - `scripts/check-baseline.sh`
 - `npm run dev` - `node node_modules/next/dist/bin/next dev`
 - `npm run start` - `node node_modules/next/dist/bin/next start`
-- `npm run test` - `npm run type-check && npm run test:parser && npm run build && npm run check && npm run audit`
+- `npm run test` - `npm run type-check && npm run test:parser && npm run test:provider && npm run build && npm run test:http && npm run check && npm run audit`
+- `npm run test:http` - live HTTP checks against a built Next server and a synthetic provider
 - `npm run test:parser` - `node node_modules/tsx/dist/cli.mjs scripts/test-execute-parser.ts`
+- `npm run test:provider` - focused provider abort and containment checks
 - `npm run type-check` - `node node_modules/typescript/bin/tsc --noEmit`
 
 ## Testing and Verification
@@ -79,14 +83,18 @@ npm test
 `make check` delegates to `npm test`, which runs TypeScript checks, the Next
 build, parser/validator regression tests through the source baseline guard,
 and `npm audit --audit-level=moderate`. The execute API remains disabled unless
-`DOCS_EXECUTE_ENABLED=true` and requires `OPENAI_API_KEY` at runtime. It accepts
+`DOCS_EXECUTE_ENABLED=true`, `EXECUTE_API_TOKEN`, and `OPENAI_API_KEY` at runtime.
+The editor keeps the caller-provided token in component memory only and sends it
+as a bearer credential; it is not placed in browser storage or public build-time
+configuration. The route accepts
 `Content-Type: application/json` requests only, rejects multi-value Content-Type
 headers, and validates submitted examples before calling the OpenAI SDK.
-Request bodies may only contain a `code` string. It rejects ASCII and Unicode whitespace-only message content so
+Request bodies may only contain a `code` string. It rejects ASCII and Unicode whitespace-only message content plus format-control-only message content so
 blank prompts are not proxied, while accepted content retains its original
 spacing. Chat message objects may only contain `role` and
 `content`. Enabled provider calls use a fixed 30-second timeout with zero SDK
 retries so one interactive request has a bounded OpenAI attempt. Enabled
+provider work is aborted when the client connection closes. Enabled
 traffic is limited to ten enabled POST attempts per process per minute;
 exhausted windows return `429` with `Retry-After` before parsing or provider
 setup. Public multi-instance deployments still require a shared limiter. The build
@@ -119,10 +127,15 @@ When the required SDK or runtime is unavailable, use static checks and source re
 - `OPENAI_API_KEY` must be provided through the environment. Do not commit
   OpenAI keys or sample outputs containing private prompt data. Leading and
   trailing whitespace is removed, and an empty result is rejected as missing.
+- `EXECUTE_API_TOKEN` must be a nonblank visible-ASCII server-side secret.
+  Requests must send the exact value as `Authorization: Bearer <token>`. The
+  editor token field is deliberately non-persistent; never put this credential
+  in `NEXT_PUBLIC_*`, browser storage, source control, screenshots, or logs.
 - `DOCS_EXECUTE_ENABLED` must be exactly `true` after whitespace and case
   normalization before the spend-capable route is active. This is a deployment
-  safety interlock, not authentication; public deployments still require an
-  upstream authentication and rate-limiting layer.
+  safety interlock in addition to bearer authentication. Production deployments
+  should replace the prototype shared token with user identity/authorization and
+  still require a distributed rate-limiting layer.
 - `OPENAI_ALLOWED_MODELS` can narrow the comma-separated chat model allow-list.
   It can only narrow the checked-in default model allow-list; unsupported
   values are not allowed to expand the proxy. When unset, the execute API only
@@ -140,15 +153,18 @@ When the required SDK or runtime is unavailable, use static checks and source re
   before reading `code`, `model`, `messages`, `role`, or `content`.
 - Enabled provider calls use a fixed 30-second timeout with zero SDK retries so
   one interactive request has a bounded OpenAI attempt.
-- Provider-eligible requests consume the process-local budget only after
-  Content-Type, body, code, parameter, and API-key validation. Ten eligible
+- Provider-eligible requests consume the process-local budget only after bearer
+  authentication plus Content-Type, body, code, parameter, and API-key validation. Ten eligible
   attempts per process per minute are admitted; excess eligible attempts receive
   `429` with `Retry-After` before provider setup. Multi-instance deployments
   still require shared upstream enforcement.
 - Execute API responses use `Cache-Control: no-store` so code, model output,
   and errors are not intentionally cached.
 - Execute content-type validation rejects multi-value Content-Type headers to
-  avoid ambiguous request interpretation before body normalization.
+  avoid ambiguous request interpretation before body normalization, including
+  duplicate values combined after media-type parameters.
+- Client disconnects abort in-flight SDK requests instead of leaving provider
+  work running until timeout.
 - The parser test toolchain retains patched `esbuild 0.28.1` in the lockfile.
 
 ## Security and Privacy Notes

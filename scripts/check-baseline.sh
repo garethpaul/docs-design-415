@@ -66,6 +66,7 @@ for path in \
   "pages/docs.tsx" \
   "pages/DocsPage.module.css" \
   "components/Editor.tsx" \
+  "components/Editor.module.css" \
   "components/Navigation.module.css" \
   "components/Sidebar.tsx" \
   "components/Sidebar.module.css" \
@@ -99,19 +100,22 @@ for path in \
   "docs/plans/2026-06-18-compatible-dependency-refresh.md" \
   "docs/plans/2026-06-15-message-whitespace-contract.md" \
   "scripts/test-execute-parser.ts" \
+  "scripts/test-execute-provider.ts" \
+  "scripts/test-execute-http.mjs" \
+  "scripts/test-review-mutations.mjs" \
   "scripts/check-baseline.sh"; do
   require_file "$path"
 done
 
 for integration_contract in \
-  "Commit: pending implementation commit" \
-  "Pull request: pending" \
-  "Evidence status: not run" \
+  "Commit: recorded in aggregate pull request" \
+  "Pull request: recorded after push" \
+  "Evidence status: local synthetic route and browser evidence completed; hosted deployment pending" \
   "isolated synthetic deployment" \
   "Required sanitized evidence" \
   "Use only \`pass\`, \`fail\`, \`blocked\`, or \`not run\`" \
   "A parser test, source check, package build, or static contract cannot mark an" \
-  "No responsive browser, deployed execute route, deployment edge, or live OpenAI"; do
+  "Local built-route, responsive-browser, and synthetic-provider scenarios were"; do
   if ! grep -Fq "$integration_contract" "$INTEGRATION_VERIFICATION"; then
     printf '%s\n' "Integration verification matrix contract is missing: $integration_contract" >&2
     exit 1
@@ -119,8 +123,8 @@ for integration_contract in \
 done
 
 if [ "$(grep -Ec '^\| [0-9]+ \|' "$INTEGRATION_VERIFICATION")" -ne 14 ] ||
-  [ "$(grep -Ec '^\| [0-9]+ \|.*\| not run \|$' "$INTEGRATION_VERIFICATION")" -ne 14 ]; then
-  printf '%s\n' "Integration verification matrix must retain 14 explicitly not-run scenarios." >&2
+  [ "$(grep -Ec '^\| [0-9]+ \|.*\| (pass|fail|blocked|not run) \|$' "$INTEGRATION_VERIFICATION")" -ne 14 ]; then
+  printf '%s\n' "Integration verification matrix must retain 14 explicitly classified scenarios." >&2
   exit 1
 fi
 
@@ -308,7 +312,7 @@ const lock = JSON.parse(fs.readFileSync(process.argv[3], "utf8"));
 if (pkg.dependencies.next === "latest") {
   throw new Error("next must be pinned; latest is not reproducible");
 }
-for (const script of ["check", "audit", "test", "test:parser", "type-check"]) {
+for (const script of ["check", "audit", "test", "test:parser", "test:provider", "test:http", "test:mutations", "type-check"]) {
   if (!pkg.scripts || !pkg.scripts[script]) {
     throw new Error(`package.json must define ${script}`);
   }
@@ -316,8 +320,20 @@ for (const script of ["check", "audit", "test", "test:parser", "type-check"]) {
 if (!pkg.scripts.test.includes("npm run test:parser")) {
   throw new Error("npm test must include the execute parser test gate");
 }
+if (!pkg.scripts.test.includes("npm run test:provider")) {
+  throw new Error("npm test must include the execute provider test gate");
+}
+if (!pkg.scripts.test.includes("npm run test:http")) {
+  throw new Error("npm test must include the live execute HTTP test gate");
+}
+if (!pkg.scripts.test.includes("npm run test:mutations")) {
+  throw new Error("npm test must include the hostile review mutation gate");
+}
 if (!pkg.scripts.test.includes("npm run build")) {
   throw new Error("npm test must include the Next build gate");
+}
+if (pkg.scripts.test.indexOf("npm run build") > pkg.scripts.test.indexOf("npm run test:http")) {
+  throw new Error("npm test must build before starting the live execute HTTP gate");
 }
 if (!pkg.scripts.build.includes("rm -rf .next &&") || !pkg.scripts.build.includes("next build --webpack")) {
   throw new Error("npm run build must clear .next and use the stable Webpack builder");
@@ -407,8 +423,10 @@ for required in \
   "hasJsonContentType" \
   "isExecuteApiEnabled" \
   "normalizeOpenAIApiKey" \
+  "normalizeExecuteApiToken" \
   "normalizeChatRequest" \
   "OPENAI_API_KEY" \
+  "EXECUTE_API_TOKEN" \
   "OPENAI_ALLOWED_MODELS" \
   "ALLOWED_BODY_FIELDS" \
   "ALLOWED_MESSAGE_ROLES" \
@@ -422,7 +440,7 @@ for required in \
 done
 
 if ! grep -Fq "OPENAI_REQUEST_OPTIONS = Object.freeze({ timeout: 30_000, maxRetries: 0 })" "$API" ||
-  ! grep -Fq "OPENAI_REQUEST_OPTIONS," "$API" ||
+  ! grep -Fq "{ ...OPENAI_REQUEST_OPTIONS, signal: requestAbortController.signal }" "$API" ||
   ! grep -Fq "assert.deepEqual(OPENAI_REQUEST_OPTIONS, { timeout: 30_000, maxRetries: 0 })" "$ROOT_DIR/scripts/test-execute-parser.ts" ||
   ! grep -Fq "Object.isFrozen(OPENAI_REQUEST_OPTIONS)" "$ROOT_DIR/scripts/test-execute-parser.ts"; then
   printf '%s\n' "OpenAI execute requests must keep the tested 30-second zero-retry boundary." >&2
@@ -449,17 +467,40 @@ if ! grep -Fq "consumeCapacity(1_000)" "$ROOT_DIR/scripts/test-execute-parser.ts
 fi
 
 if ! awk '
+  /const executeApiToken = normalizeExecuteApiToken\(\)/ { auth_config = NR }
+  /isAuthorized\(req.headers.authorization, executeApiToken\)/ { auth_check = NR }
   /if \(enforceExecuteRateLimit\(res\)\)/ { limiter = NR }
   /hasJsonContentType\(req.headers\["content-type"\]\)/ { content_type = NR }
   /normalizeExecuteBody\(req.body\)/ { body = NR }
   /normalizeChatRequest\(extractParameters\(body.code\)\)/ { params = NR }
   /const apiKey = normalizeOpenAIApiKey\(\)/ { api_key = NR }
   /new OpenAI/ { client = NR }
-  END { exit !(content_type && body && params && api_key && limiter && client && content_type < body && body < params && params < api_key && api_key < limiter && limiter < client) }
+  END { exit !(auth_config && auth_check && content_type && body && params && api_key && limiter && client && auth_config < auth_check && auth_check < content_type && content_type < body && body < params && params < api_key && api_key < limiter && limiter < client) }
 ' "$API" ||
   ! grep -Fq "invalidContentTypeResponse.statusCode, 415" "$ROOT_DIR/scripts/test-execute-parser.ts" ||
   ! grep -Fq "currentWindow = Date.now()" "$ROOT_DIR/scripts/test-execute-parser.ts"; then
   printf '%s\n' "Execute capacity must apply after local validation and before provider setup." >&2
+  exit 1
+fi
+
+if ! grep -Fq 'export function normalizeExecuteApiToken(value: unknown = process.env.EXECUTE_API_TOKEN)' "$API" || \
+  ! grep -Fq 'createHash("sha256").update(providedToken).digest()' "$API" || \
+  ! grep -Fq 'timingSafeEqual(providedDigest, expectedDigest)' "$API" || \
+  ! grep -Fq 'Bearer realm="docs-execute"' "$API" || \
+  ! grep -Fq 'missingTokenResponse.statusCode, 503' "$ROOT_DIR/scripts/test-execute-parser.ts" || \
+  ! grep -Fq 'unauthorizedResponse.statusCode, 401' "$ROOT_DIR/scripts/test-execute-parser.ts" || \
+  ! grep -Fq '["Bearer test-execute-token"]' "$ROOT_DIR/scripts/test-execute-parser.ts"; then
+  printf '%s\n' "Execute API authentication must fail closed and reject ambiguous bearer headers." >&2
+  exit 1
+fi
+
+if ! grep -Fq 'req.once("aborted", abortProviderRequest)' "$API" || \
+  ! grep -Fq 'res.once("close", abortWhenResponseCloses)' "$API" || \
+  ! grep -Fq 'req.socket.once("close", abortWhenResponseCloses)' "$API" || \
+  ! grep -Fq 'requestAbortController.signal.aborted || req.aborted' "$API" || \
+  ! grep -Fq 'upstreamDisconnected.promise' "$ROOT_DIR/scripts/test-execute-provider.ts" || \
+  ! grep -Fq 'slowRequestDisconnected.promise' "$ROOT_DIR/scripts/test-execute-http.mjs"; then
+  printf '%s\n' "Client disconnects must abort in-flight provider requests with focused and live coverage." >&2
   exit 1
 fi
 
@@ -499,8 +540,10 @@ if ! grep -Fq 'value.trim().toLowerCase() === "true"' "$API" ||
   exit 1
 fi
 
-if ! grep -Fq "content.trim().length === 0" "$API"; then
-  printf '%s\n' "execute API must reject whitespace-only message content." >&2
+if ! grep -Fq "function hasVisibleMessageContent" "$API" || \
+  ! grep -Fq '!hasVisibleMessageContent(content)' "$API" || \
+  ! grep -Fq '"\u2066\u2069"' "$ROOT_DIR/scripts/test-execute-parser.ts"; then
+  printf '%s\n' "execute API must reject whitespace- and format-control-only message content." >&2
   exit 1
 fi
 
@@ -611,9 +654,10 @@ if ! grep -Fq "hasJsonContentType(\"Application/JSON; charset=utf-8\")" "$ROOT_D
   exit 1
 fi
 
-if [ "$(printf '%s\n' "$CONTENT_TYPE_HELPER" | grep -Fc 'if (typeof contentType !== "string") {')" -ne 1 ] ||
+if [ "$(printf '%s\n' "$CONTENT_TYPE_HELPER" | grep -Fc 'typeof contentType !== "string" || contentType.includes(",")')" -ne 1 ] ||
   ! grep -Fq 'hasJsonContentType(["text/plain", "application/json"]), false' "$ROOT_DIR/scripts/test-execute-parser.ts" ||
   ! grep -Fq 'hasJsonContentType(["application/json", "application/json"]), false' "$ROOT_DIR/scripts/test-execute-parser.ts" ||
+  ! grep -Fq 'hasJsonContentType("application/json; charset=utf-8, text/plain"), false' "$ROOT_DIR/scripts/test-execute-parser.ts" ||
   ! grep -Fq 'hasJsonContentType([]), false' "$ROOT_DIR/scripts/test-execute-parser.ts"; then
   printf '%s\n' "Execute content-type validation must reject every multi-value header." >&2
   exit 1
@@ -632,6 +676,14 @@ fi
 
 if ! grep -Fq "body: JSON.stringify({ code: codeContent })" "$EDITOR"; then
   printf '%s\n' "Editor must post the current code content to the execute API." >&2
+  exit 1
+fi
+
+if ! grep -Fq 'type="password"' "$EDITOR" || \
+  ! grep -Fq 'autoComplete="off"' "$EDITOR" || \
+  ! grep -Fq 'Authorization: `Bearer ${executeApiToken}`' "$EDITOR" || \
+  grep -Eq 'localStorage|sessionStorage|NEXT_PUBLIC_.*TOKEN' "$EDITOR"; then
+  printf '%s\n' "Editor must send a non-persistent bearer token without exposing it through public configuration." >&2
   exit 1
 fi
 
@@ -942,8 +994,8 @@ if ! grep -Fq "own request, parameter, and message fields" "$README"; then
   exit 1
 fi
 
-if ! grep -Fq 'content.trim().length === 0' "$API" ||
-  ! grep -Fq 'for (const blankContent of ["", "   ", "\t\n", "\u00a0", "\ufeff"] as const)' "$ROOT_DIR/scripts/test-execute-parser.ts" ||
+if ! grep -Fq '!hasVisibleMessageContent(content)' "$API" ||
+  ! grep -Fq '"\u2060"' "$ROOT_DIR/scripts/test-execute-parser.ts" ||
   ! grep -Fq 'content: "  Keep this spacing.  "' "$ROOT_DIR/scripts/test-execute-parser.ts"; then
   printf '%s\n' "Execute message whitespace rejection and preservation coverage is incomplete." >&2
   exit 1

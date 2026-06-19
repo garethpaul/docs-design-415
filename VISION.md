@@ -64,6 +64,8 @@ Current baseline:
 - Keep the executable sample on the CodeMirror JavaScript extension with TypeScript parsing enabled so its editor grammar matches execute parsing.
 - The execute API rejects whitespace-only message content before proxying.
 - Verify Unicode message whitespace rejection without trimming accepted content.
+- Require a non-persistent bearer token before parsing spend-capable requests.
+- Abort provider work when the requesting client disconnects.
 
 Next priorities:
 

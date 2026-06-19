@@ -6,7 +6,7 @@
     height: 15px;
     animation: spin 1s linear infinite;
   }
-  
+
   @keyframes spin {
     0% { transform: rotate(0deg); }
     100% { transform: rotate(360deg); }
@@ -37,4 +37,26 @@
     background-color: transparent !important;
     border-right: none !important;
   }
-  
+
+.executeControls {
+  align-items: end;
+  display: flex;
+  gap: 12px;
+  padding: 10px;
+}
+
+.tokenField {
+  color: #4b5563;
+  display: grid;
+  flex: 1;
+  font-size: 12px;
+  gap: 4px;
+  max-width: 320px;
+}
+
+.tokenField input {
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font: inherit;
+  padding: 8px 10px;
+}

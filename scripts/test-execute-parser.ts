@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import type { NextApiRequest, NextApiResponse } from "next";
 import executeHandler, {
   createFixedWindowRateLimiter,
@@ -9,6 +10,7 @@ import executeHandler, {
   extractParameters,
   hasJsonContentType,
   isExecuteApiEnabled,
+  normalizeExecuteApiToken,
   normalizeOpenAIApiKey,
   normalizeExecuteBody,
   normalizeChatRequest,
@@ -47,6 +49,12 @@ function parseAndNormalize(code: string) {
   return normalizeChatRequest(extractParameters(code));
 }
 
+const editorSource = readFileSync(new URL("../components/Editor.tsx", import.meta.url), "utf8");
+assert.match(editorSource, /type="password"/);
+assert.match(editorSource, /autoComplete="off"/);
+assert.match(editorSource, /Authorization: `Bearer \$\{executeApiToken\}`/);
+assert.doesNotMatch(editorSource, /localStorage|sessionStorage/);
+
 assert.deepEqual(OPENAI_REQUEST_OPTIONS, { timeout: 30_000, maxRetries: 0 });
 assert.equal(Object.isFrozen(OPENAI_REQUEST_OPTIONS), true);
 assert.equal(EXECUTE_CACHE_CONTROL, "no-store");
@@ -62,6 +70,10 @@ assert.equal(normalizeOpenAIApiKey(null), null);
 assert.equal(normalizeOpenAIApiKey(""), null);
 assert.equal(normalizeOpenAIApiKey("   "), null);
 assert.equal(normalizeOpenAIApiKey("  test-api-key  "), "test-api-key");
+assert.equal(normalizeExecuteApiToken(null), null);
+assert.equal(normalizeExecuteApiToken("   "), null);
+assert.equal(normalizeExecuteApiToken("token with spaces"), null);
+assert.equal(normalizeExecuteApiToken("  test-execute-token  "), "test-execute-token");
 
 const methodResponse = createTestResponse();
 void executeHandler(
@@ -105,8 +117,70 @@ assert.match(limitedResponse.headers["Retry-After"], /^[1-9][0-9]*$/);
 assert.deepEqual(limitedResponse.body, { error: "Execute API request limit exceeded" });
 
 const originalExecuteEnabled = process.env.DOCS_EXECUTE_ENABLED;
+const originalExecuteApiToken = process.env.EXECUTE_API_TOKEN;
 try {
   process.env.DOCS_EXECUTE_ENABLED = "true";
+
+  delete process.env.EXECUTE_API_TOKEN;
+  const missingTokenResponse = createTestResponse();
+  void executeHandler(
+    {
+      method: "POST",
+      headers: { "content-type": "text/plain" },
+      body: { code: "const invalid = true;" },
+    } as NextApiRequest,
+    missingTokenResponse as unknown as NextApiResponse,
+  );
+  assert.equal(missingTokenResponse.statusCode, 503);
+  assert.deepEqual(missingTokenResponse.body, {
+    error: "Execute API authentication is not configured",
+  });
+
+  process.env.EXECUTE_API_TOKEN = "   ";
+  const blankTokenResponse = createTestResponse();
+  void executeHandler(
+    {
+      method: "POST",
+      headers: { "content-type": "text/plain" },
+      body: { code: "const invalid = true;" },
+    } as NextApiRequest,
+    blankTokenResponse as unknown as NextApiResponse,
+  );
+  assert.equal(blankTokenResponse.statusCode, 503);
+  assert.deepEqual(blankTokenResponse.body, {
+    error: "Execute API authentication is not configured",
+  });
+
+  process.env.EXECUTE_API_TOKEN = "test-execute-token";
+  for (const authorization of [
+    undefined,
+    ["Bearer test-execute-token"],
+    "Basic test-execute-token",
+    "Bearer",
+    "Bearer ",
+    "Bearer test-execute-token extra",
+    "Bearer wrong-token",
+  ]) {
+    const unauthorizedResponse = createTestResponse();
+    void executeHandler(
+      {
+        method: "POST",
+        headers: {
+          "content-type": "text/plain",
+          ...(authorization === undefined ? {} : { authorization }),
+        },
+        body: { code: "const invalid = true;" },
+      } as NextApiRequest,
+      unauthorizedResponse as unknown as NextApiResponse,
+    );
+    assert.equal(unauthorizedResponse.statusCode, 401);
+    assert.equal(
+      unauthorizedResponse.headers["WWW-Authenticate"],
+      'Bearer realm="docs-execute"',
+    );
+    assert.deepEqual(unauthorizedResponse.body, { error: "Unauthorized" });
+  }
+
   const currentWindow = Date.now();
   for (let request = 0; request < EXECUTE_RATE_LIMIT_MAX_REQUESTS; request += 1) {
     enforceExecuteRateLimit(
@@ -119,7 +193,10 @@ try {
   void executeHandler(
     {
       method: "POST",
-      headers: { "content-type": "text/plain" },
+      headers: {
+        authorization: "Bearer test-execute-token",
+        "content-type": "text/plain",
+      },
       body: { code: "const invalid = true;" },
     } as NextApiRequest,
     invalidContentTypeResponse as unknown as NextApiResponse,
@@ -135,7 +212,10 @@ try {
   void executeHandler(
     {
       method: "POST",
-      headers: { "content-type": "application/json" },
+      headers: {
+        authorization: "Bearer test-execute-token",
+        "content-type": "application/json",
+      },
       body: {
         code: `await openai.chat.completions.create({
           model: "gpt-4o-mini",
@@ -160,6 +240,11 @@ try {
     delete process.env.OPENAI_API_KEY;
   } else {
     process.env.OPENAI_API_KEY = originalApiKey;
+  }
+  if (originalExecuteApiToken === undefined) {
+    delete process.env.EXECUTE_API_TOKEN;
+  } else {
+    process.env.EXECUTE_API_TOKEN = originalExecuteApiToken;
   }
 }
 
@@ -198,6 +283,11 @@ assert.equal(parseAndNormalize("const value = 1;"), null);
 
 assert.equal(hasJsonContentType("application/json"), true);
 assert.equal(hasJsonContentType("Application/JSON; charset=utf-8"), true);
+assert.equal(hasJsonContentType("application/json; charset=utf-8, text/plain"), false);
+assert.equal(
+  hasJsonContentType("application/json; charset=utf-8, application/json"),
+  false,
+);
 assert.equal(hasJsonContentType(["text/plain", "application/json"]), false);
 assert.equal(hasJsonContentType(["application/json", "application/json"]), false);
 assert.equal(hasJsonContentType([]), false);
@@ -309,7 +399,16 @@ assert.equal(
   null,
 );
 
-for (const blankContent of ["", "   ", "\t\n", "\u00a0", "\ufeff"] as const) {
+for (const blankContent of [
+  "",
+  "   ",
+  "\t\n",
+  "\u00a0",
+  "\ufeff",
+  "\u200b",
+  "\u2060",
+  "\u2066\u2069",
+] as const) {
   assert.equal(
     normalizeChatRequest({
       model: "gpt-4o-mini",

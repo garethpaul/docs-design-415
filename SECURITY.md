@@ -31,9 +31,10 @@ Helpful reports include:
 - Review found file, document, data, or media parsing flows; changes in those areas should receive security-focused review before merge.
 - Review found database, model, query, or persistence-related code; changes in those areas should receive security-focused review before merge.
 - Dependency manifests detected: package.json, package-lock.json. Dependency updates should preserve lockfiles when present and avoid introducing packages without a clear maintenance reason.
-- The spend-capable execute route defaults to disabled and requires
-  `DOCS_EXECUTE_ENABLED=true`; public deployments still need authentication and
-  rate limiting.
+- The spend-capable execute route defaults to disabled and requires both
+  `DOCS_EXECUTE_ENABLED=true` and the server-only `EXECUTE_API_TOKEN` bearer
+  credential. The shared token is a prototype boundary; public deployments still
+  need user identity/authorization and distributed rate limiting.
 - Enabled OpenAI calls use a 30-second timeout with automatic SDK retries
   disabled so one request cannot multiply provider attempts or run indefinitely.
 - A process-local fixed-window budget admits ten provider-eligible attempts per
@@ -46,9 +47,13 @@ Helpful reports include:
 - Explicitly empty model allowlists must fail closed; built-in defaults apply
   only when `OPENAI_ALLOWED_MODELS` is absent.
 - Unicode whitespace rejection and accepted-content preservation must remain
-  covered for execute messages so blank prompts cannot consume provider capacity.
+  covered for execute messages, including format-control-only prompts, so blank
+  requests cannot consume provider capacity.
 - Ambiguous multi-value Content-Type headers are rejected before request-body
-  normalization, including arrays where one value names JSON.
+  normalization, including arrays and combined values after media-type parameters.
+- Client and response-socket disconnects abort in-flight OpenAI SDK requests.
+- The editor keeps the execute bearer token in component memory only and must
+  never persist it or expose it through `NEXT_PUBLIC_*` configuration.
 - Execute API responses set `Cache-Control: no-store` so submitted code,
   provider output, and route errors are not intentionally cached.
 - Responsive browser, deployment, and provider claims require the exact-head
