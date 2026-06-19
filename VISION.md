@@ -47,9 +47,25 @@ Current baseline:
   cannot expand beyond the checked-in default model set.
 - `DOCS_EXECUTE_ENABLED=true` is required before provider requests can run;
   public deployments still need upstream authentication and rate limiting.
+- Enabled provider calls use a 30-second timeout with SDK retries disabled.
+- Consume execute capacity only after local validation and configuration, but
+  before provider setup; require shared upstream enforcement for public
+  multi-instance deployments.
+- Reject blank OpenAI API keys before execute capacity consumption.
+- Fail closed for explicitly empty model allowlists.
+- Reject ambiguous multi-value content types before execute body parsing.
+- Execute API responses use `Cache-Control: no-store` to avoid intentionally
+  caching submitted code, provider output, or errors.
+- Keep exact-head responsive browser, deployment, and provider evidence
+  sanitized and separate from portable package verification.
+- The parser test toolchain retains patched `esbuild 0.28.1` in the lockfile.
 - The editor sends the current code string directly and avoids logging prompt
   content, parsed parameters, or provider responses.
+- Keep the executable sample on the CodeMirror JavaScript extension with TypeScript parsing enabled so its editor grammar matches execute parsing.
 - The execute API rejects whitespace-only message content before proxying.
+- Verify Unicode message whitespace rejection without trimming accepted content.
+- Require a non-persistent bearer token before parsing spend-capable requests.
+- Abort provider work when the requesting client disconnects.
 
 Next priorities:
 

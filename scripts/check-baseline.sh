@@ -15,6 +15,7 @@ LANGUAGE_SOURCE="$ROOT_DIR/components/LanguageButton.tsx"
 LANGUAGE_STYLE="$ROOT_DIR/components/LanguageButton.module.css"
 CTA_STYLE="$ROOT_DIR/components/CTAButton.module.css"
 README="$ROOT_DIR/README.md"
+VISION="$ROOT_DIR/VISION.md"
 PLAN="$ROOT_DIR/docs/plans/2026-06-08-docs-design-execute-api-baseline.md"
 CHECK_PLAN="$ROOT_DIR/docs/plans/2026-06-08-docs-design-check-wrapper.md"
 WHITESPACE_PLAN="$ROOT_DIR/docs/plans/2026-06-09-docs-design-whitespace-message-guard.md"
@@ -29,6 +30,19 @@ OWN_FIELD_PLAN="$ROOT_DIR/docs/plans/2026-06-09-docs-design-own-field-validation
 CI_PLAN="$ROOT_DIR/docs/plans/2026-06-10-ci-baseline.md"
 EXECUTE_ENABLE_PLAN="$ROOT_DIR/docs/plans/2026-06-10-docs-design-execute-enable-gate.md"
 RESPONSIVE_DOCS_PLAN="$ROOT_DIR/docs/plans/2026-06-12-responsive-docs-workspace.md"
+REQUEST_TIMEOUT_PLAN="$ROOT_DIR/docs/plans/2026-06-13-docs-design-openai-request-timeout.md"
+EXECUTE_RATE_BUDGET_PLAN="$ROOT_DIR/docs/plans/2026-06-13-docs-design-execute-fixed-window-budget.md"
+SINGLE_CONTENT_TYPE_PLAN="$ROOT_DIR/docs/plans/2026-06-13-single-json-content-type.md"
+PROVIDER_ELIGIBLE_BUDGET_PLAN="$ROOT_DIR/docs/plans/2026-06-13-docs-design-provider-eligible-budget.md"
+NO_STORE_PLAN="$ROOT_DIR/docs/plans/2026-06-14-docs-design-execute-no-store.md"
+MAKE_ROOT_PLAN="$ROOT_DIR/docs/plans/2026-06-14-make-root-override-protection.md"
+INTEGRATION_VERIFICATION="$ROOT_DIR/INTEGRATION_VERIFICATION.md"
+INTEGRATION_VERIFICATION_PLAN="$ROOT_DIR/docs/plans/2026-06-14-docs-design-integration-verification.md"
+NONBLANK_API_KEY_PLAN="$ROOT_DIR/docs/plans/2026-06-15-001-nonblank-openai-api-key.md"
+EMPTY_MODEL_ALLOWLIST_PLAN="$ROOT_DIR/docs/plans/2026-06-15-explicit-empty-model-allowlist.md"
+MESSAGE_WHITESPACE_CONTRACT_PLAN="$ROOT_DIR/docs/plans/2026-06-15-message-whitespace-contract.md"
+EDITOR_JAVASCRIPT_PLAN="$ROOT_DIR/docs/plans/2026-06-15-editor-javascript-language.md"
+DEPENDENCY_REFRESH_PLAN="$ROOT_DIR/docs/plans/2026-06-18-compatible-dependency-refresh.md"
 CI_WORKFLOW="$ROOT_DIR/.github/workflows/check.yml"
 MAKEFILE="$ROOT_DIR/Makefile"
 
@@ -42,6 +56,7 @@ require_file() {
 
 for path in \
   "README.md" \
+  "INTEGRATION_VERIFICATION.md" \
   ".github/workflows/check.yml" \
   "CHANGES.md" \
   "Makefile" \
@@ -51,6 +66,7 @@ for path in \
   "pages/docs.tsx" \
   "pages/DocsPage.module.css" \
   "components/Editor.tsx" \
+  "components/Editor.module.css" \
   "components/Navigation.module.css" \
   "components/Sidebar.tsx" \
   "components/Sidebar.module.css" \
@@ -72,13 +88,105 @@ for path in \
   "docs/plans/2026-06-10-ci-baseline.md" \
   "docs/plans/2026-06-10-docs-design-execute-enable-gate.md" \
   "docs/plans/2026-06-12-responsive-docs-workspace.md" \
+  "docs/plans/2026-06-13-docs-design-openai-request-timeout.md" \
+  "docs/plans/2026-06-13-docs-design-execute-fixed-window-budget.md" \
+  "docs/plans/2026-06-13-single-json-content-type.md" \
+  "docs/plans/2026-06-13-docs-design-provider-eligible-budget.md" \
+  "docs/plans/2026-06-14-docs-design-execute-no-store.md" \
+  "docs/plans/2026-06-14-make-root-override-protection.md" \
+  "docs/plans/2026-06-14-docs-design-integration-verification.md" \
+  "docs/plans/2026-06-15-explicit-empty-model-allowlist.md" \
+  "docs/plans/2026-06-15-editor-javascript-language.md" \
+  "docs/plans/2026-06-18-compatible-dependency-refresh.md" \
+  "docs/plans/2026-06-15-message-whitespace-contract.md" \
   "scripts/test-execute-parser.ts" \
+  "scripts/test-execute-provider.ts" \
+  "scripts/test-execute-http.mjs" \
+  "scripts/test-review-mutations.mjs" \
   "scripts/check-baseline.sh"; do
   require_file "$path"
 done
 
-if ! grep -Fq "actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10" "$CI_WORKFLOW" ||
-  ! grep -Fq "actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e" "$CI_WORKFLOW" ||
+for integration_contract in \
+  "Commit: recorded in aggregate pull request" \
+  "Pull request: recorded after push" \
+  "Evidence status: local synthetic route and browser evidence completed; hosted deployment pending" \
+  "isolated synthetic deployment" \
+  "Required sanitized evidence" \
+  "Use only \`pass\`, \`fail\`, \`blocked\`, or \`not run\`" \
+  "A parser test, source check, package build, or static contract cannot mark an" \
+  "Local built-route, responsive-browser, and synthetic-provider scenarios were"; do
+  if ! grep -Fq "$integration_contract" "$INTEGRATION_VERIFICATION"; then
+    printf '%s\n' "Integration verification matrix contract is missing: $integration_contract" >&2
+    exit 1
+  fi
+done
+
+if [ "$(grep -Ec '^\| [0-9]+ \|' "$INTEGRATION_VERIFICATION")" -ne 14 ] ||
+  [ "$(grep -Ec '^\| [0-9]+ \|.*\| (pass|fail|blocked|not run) \|$' "$INTEGRATION_VERIFICATION")" -ne 14 ]; then
+  printf '%s\n' "Integration verification matrix must retain 14 explicitly classified scenarios." >&2
+  exit 1
+fi
+
+for integration_scenario in \
+  "Isolated deployment setup" \
+  "Disabled execute route" \
+  "Missing provider configuration" \
+  "Method and media-type restrictions" \
+  "Desktop docs workspace" \
+  "Narrow docs workspace" \
+  "Valid editor submission" \
+  "Invalid editor submission" \
+  "Provider success" \
+  "Provider failure or timeout" \
+  "Response cache boundary" \
+  "Execute request budget" \
+  "Browser refresh behavior" \
+  "Public deployment controls"; do
+  if [ "$(grep -Fc "| $integration_scenario |" "$INTEGRATION_VERIFICATION")" -ne 1 ]; then
+    printf '%s\n' "Integration verification scenario is missing or duplicated: $integration_scenario" >&2
+    exit 1
+  fi
+done
+
+for integration_guidance in \
+  "INTEGRATION_VERIFICATION.md" \
+  "isolated synthetic requests" \
+  "sanitized outcomes"; do
+  if ! grep -Fq "$integration_guidance" "$README"; then
+    printf '%s\n' "README integration verification guidance is missing: $integration_guidance" >&2
+    exit 1
+  fi
+done
+
+if ! grep -Fq "Keep exact-head responsive browser, deployment, and provider evidence" "$VISION" ||
+  ! grep -Fq "Responsive browser, deployment, and provider claims require" "$ROOT_DIR/SECURITY.md" ||
+  ! grep -Fq "Added an exact-head docs-design integration verification matrix" "$ROOT_DIR/CHANGES.md"; then
+  printf '%s\n' "Project guidance must retain the docs-design integration evidence boundary." >&2
+  exit 1
+fi
+
+for integration_plan_contract in \
+  "status: completed" \
+  "## Status: Completed" \
+  "## Work Completed" \
+  "## Verification Completed" \
+  "Node.js 20.19.5 and Node.js 24.16.0" \
+  "Twelve isolated hostile documentation mutations were rejected" \
+  "all 14 integration scenarios remain"; do
+  if ! grep -Fq "$integration_plan_contract" "$INTEGRATION_VERIFICATION_PLAN"; then
+    printf '%s\n' "Integration verification plan must record completed evidence: $integration_plan_contract" >&2
+    exit 1
+  fi
+done
+
+CONTENT_TYPE_HELPER=$(awk '
+  /^export function hasJsonContentType\(/ { capture = 1 }
+  capture && /^export function / && $0 !~ /^export function hasJsonContentType\(/ { exit }
+  capture { print }
+' "$API")
+
+if ! grep -Fq "actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e" "$CI_WORKFLOW" ||
   ! grep -Fq "node-version: [20, 22, 24]" "$CI_WORKFLOW" ||
   ! grep -Fq "run: npm ci" "$CI_WORKFLOW" ||
   ! grep -Fq "run: make check" "$CI_WORKFLOW"; then
@@ -86,9 +194,85 @@ if ! grep -Fq "actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10" "$CI_W
   exit 1
 fi
 
-if ! grep -Fq "permissions:" "$CI_WORKFLOW" || ! grep -Fq "contents: read" "$CI_WORKFLOW" ||
-  ! grep -Fq "workflow_dispatch:" "$CI_WORKFLOW" || ! grep -Fq "timeout-minutes: 15" "$CI_WORKFLOW"; then
-  printf '%s\n' "GitHub Actions workflow must be read-only and support bounded manual verification." >&2
+if [ "$(grep -Ec '^[[:space:]]+(-[[:space:]]+)?uses: actions/checkout@' "$CI_WORKFLOW")" -ne 1 ]; then
+  printf '%s\n' "GitHub Actions must contain exactly one checkout step." >&2
+  exit 1
+fi
+
+if ! awk '
+  function finish_step() {
+    if (checkout) {
+      checkout_count++
+      if (persist_credentials) {
+        secure_checkout_count++
+      }
+    }
+    checkout = 0
+    with_block = 0
+    persist_credentials = 0
+  }
+
+  /^      - / {
+    finish_step()
+  }
+
+  /^        uses: actions\/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10([[:space:]]+#.*)?$/ {
+    checkout = 1
+  }
+
+  /^      - uses: actions\/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10([[:space:]]+#.*)?$/ {
+    checkout = 1
+  }
+
+  checkout && /^        with:$/ {
+    with_block = 1
+  }
+
+  checkout && with_block && /^          persist-credentials: false$/ {
+    persist_credentials = 1
+  }
+
+  END {
+    finish_step()
+    exit !(checkout_count == 1 && secure_checkout_count == 1)
+  }
+' "$CI_WORKFLOW"; then
+  printf '%s\n' "The pinned checkout step must disable persisted credentials." >&2
+  exit 1
+fi
+
+if ! awk '
+  /^permissions:$/ {
+    permissions_count++
+    in_permissions = 1
+    next
+  }
+
+  in_permissions && /^[^[:space:]]/ {
+    in_permissions = 0
+  }
+
+  in_permissions && /^  contents: read$/ {
+    contents_read++
+    next
+  }
+
+  in_permissions && /^  [[:alnum:]_-]+:/ {
+    unexpected_permission++
+  }
+
+  END {
+    exit !(permissions_count == 1 && contents_read == 1 && unexpected_permission == 0)
+  }
+' "$CI_WORKFLOW" ||
+  grep -Eq '^[[:space:]]*permissions:[[:space:]]*write-all([[:space:]]*(#.*)?)?$' "$CI_WORKFLOW" ||
+  grep -Eq '^[[:space:]]+[[:alnum:]_-]+:[[:space:]]*write([[:space:]]*(#.*)?)?$' "$CI_WORKFLOW"; then
+  printf '%s\n' "GitHub Actions must grant only top-level read access to repository contents." >&2
+  exit 1
+fi
+
+if ! grep -Fq "workflow_dispatch:" "$CI_WORKFLOW" || ! grep -Fq "timeout-minutes: 15" "$CI_WORKFLOW"; then
+  printf '%s\n' "GitHub Actions workflow must support bounded manual verification." >&2
   exit 1
 fi
 
@@ -97,19 +281,38 @@ if ! grep -Fq "runs-on: ubuntu-24.04" "$CI_WORKFLOW"; then
   exit 1
 fi
 
-if ! grep -Fq 'ROOT := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))' "$MAKEFILE" ||
-  [ "$(grep -c '\$(NPM) --prefix \$(ROOT)' "$MAKEFILE")" -ne 6 ]; then
-  printf '%s\n' "Make targets must run npm from the repository root." >&2
+if ! grep -Fq "does not persist checkout credentials" "$README"; then
+  printf '%s\n' "README must document the credential-free checkout boundary." >&2
   exit 1
 fi
 
-node - "$PACKAGE_JSON" <<'NODE'
+if ! grep -Fxq 'override ROOT := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))' "$MAKEFILE" ||
+  [ "$(grep -c '\$(NPM) --prefix \$(ROOT)' "$MAKEFILE")" -ne 6 ]; then
+  printf '%s\n' "Make targets must protect and use the repository root." >&2
+  exit 1
+fi
+
+for make_root_plan_contract in \
+  "status: completed" \
+  "## Status: Completed" \
+  "## Work Completed" \
+  "## Verification Completed" \
+  "zero vulnerabilities" \
+  "Three isolated hostile assignment mutations were rejected"; do
+  if ! grep -Fq "$make_root_plan_contract" "$MAKE_ROOT_PLAN"; then
+    printf '%s\n' "Make-root plan must record completed evidence: $make_root_plan_contract" >&2
+    exit 1
+  fi
+done
+
+node - "$PACKAGE_JSON" "$ROOT_DIR/package-lock.json" <<'NODE'
 const fs = require("fs");
 const pkg = JSON.parse(fs.readFileSync(process.argv[2], "utf8"));
+const lock = JSON.parse(fs.readFileSync(process.argv[3], "utf8"));
 if (pkg.dependencies.next === "latest") {
   throw new Error("next must be pinned; latest is not reproducible");
 }
-for (const script of ["check", "audit", "test", "test:parser", "type-check"]) {
+for (const script of ["check", "audit", "test", "test:parser", "test:provider", "test:http", "test:mutations", "type-check"]) {
   if (!pkg.scripts || !pkg.scripts[script]) {
     throw new Error(`package.json must define ${script}`);
   }
@@ -117,8 +320,20 @@ for (const script of ["check", "audit", "test", "test:parser", "type-check"]) {
 if (!pkg.scripts.test.includes("npm run test:parser")) {
   throw new Error("npm test must include the execute parser test gate");
 }
+if (!pkg.scripts.test.includes("npm run test:provider")) {
+  throw new Error("npm test must include the execute provider test gate");
+}
+if (!pkg.scripts.test.includes("npm run test:http")) {
+  throw new Error("npm test must include the live execute HTTP test gate");
+}
+if (!pkg.scripts.test.includes("npm run test:mutations")) {
+  throw new Error("npm test must include the hostile review mutation gate");
+}
 if (!pkg.scripts.test.includes("npm run build")) {
   throw new Error("npm test must include the Next build gate");
+}
+if (pkg.scripts.test.indexOf("npm run build") > pkg.scripts.test.indexOf("npm run test:http")) {
+  throw new Error("npm test must build before starting the live execute HTTP gate");
 }
 if (!pkg.scripts.build.includes("rm -rf .next &&") || !pkg.scripts.build.includes("next build --webpack")) {
   throw new Error("npm run build must clear .next and use the stable Webpack builder");
@@ -133,20 +348,60 @@ if (pkg.overrides["@babel/runtime"] !== "7.29.7" || pkg.overrides["form-data"] !
   throw new Error("package.json must override vulnerable transitive parser/API dependencies");
 }
 for (const [name, version] of Object.entries({
+  "@codemirror/search": "6.7.1",
+  "@radix-ui/react-menubar": "1.1.18",
+  "@radix-ui/react-navigation-menu": "1.2.16",
+  openai: "6.44.0",
+})) {
+  if (pkg.dependencies?.[name] !== version ||
+      lock.packages?.[`node_modules/${name}`]?.version !== version) {
+    throw new Error(`package.json and package-lock.json must pin ${name} ${version}`);
+  }
+}
+for (const [name, version] of Object.entries({
   next: "16.2.9",
-  openai: "6.42.0",
+  openai: "6.44.0",
   react: "19.2.7",
   "react-dom": "19.2.7",
   "@codemirror/lint": "6.9.7",
+  "@codemirror/lang-javascript": "6.2.5",
 })) {
   if (pkg.dependencies?.[name] !== version) {
     throw new Error(`package.json must pin ${name} ${version}`);
   }
 }
+if (pkg.dependencies?.["@codemirror/lang-python"] !== undefined) {
+  throw new Error("package.json must not retain the Python language extension");
+}
+if (lock.packages?.[""]?.dependencies?.["@codemirror/lang-javascript"] !== "6.2.5" ||
+    lock.packages?.["node_modules/@codemirror/lang-javascript"]?.version !== "6.2.5") {
+  throw new Error("package-lock.json must pin @codemirror/lang-javascript 6.2.5");
+}
+if (lock.packages?.[""]?.dependencies?.["@codemirror/lang-python"] !== undefined ||
+    lock.packages?.["node_modules/@codemirror/lang-python"] !== undefined) {
+  throw new Error("package-lock.json must not retain the direct Python language extension");
+}
 if (pkg.scripts.audit !== "npm audit --audit-level=moderate") {
   throw new Error("package.json must keep the moderate-severity audit gate");
 }
+if (lock.packages?.["node_modules/esbuild"]?.version !== "0.28.1") {
+  throw new Error("package-lock.json must retain patched esbuild 0.28.1");
+}
 NODE
+
+for dependency_plan_contract in \
+  "## Status: Completed" \
+  "## Work Completed" \
+  "## Verification Completed" \
+  "\`@codemirror/search\` to 6.7.1" \
+  "OpenAI to 6.44.0" \
+  "TypeScript 6 and @types/node 25 remain intentionally deferred" \
+  "Eight isolated dependency-contract mutations were rejected"; do
+  if ! grep -Fq "$dependency_plan_contract" "$DEPENDENCY_REFRESH_PLAN"; then
+    printf '%s\n' "Dependency refresh plan must record completed evidence: $dependency_plan_contract" >&2
+    exit 1
+  fi
+done
 
 if grep -Fq "code.match(" "$API" || grep -Fq "JSON.parse(formattedStr)" "$API"; then
   printf '%s\n' "execute API must not parse OpenAI calls with regex/string JSON munging." >&2
@@ -163,11 +418,15 @@ for required in \
   "MAX_MESSAGES" \
   "MAX_MESSAGE_CONTENT_LENGTH" \
   "MAX_COMPLETION_TOKENS" \
+  "OPENAI_REQUEST_OPTIONS" \
   "extractParameters" \
   "hasJsonContentType" \
   "isExecuteApiEnabled" \
+  "normalizeOpenAIApiKey" \
+  "normalizeExecuteApiToken" \
   "normalizeChatRequest" \
   "OPENAI_API_KEY" \
+  "EXECUTE_API_TOKEN" \
   "OPENAI_ALLOWED_MODELS" \
   "ALLOWED_BODY_FIELDS" \
   "ALLOWED_MESSAGE_ROLES" \
@@ -180,14 +439,112 @@ for required in \
   fi
 done
 
+if ! grep -Fq "OPENAI_REQUEST_OPTIONS = Object.freeze({ timeout: 30_000, maxRetries: 0 })" "$API" ||
+  ! grep -Fq "{ ...OPENAI_REQUEST_OPTIONS, signal: requestAbortController.signal }" "$API" ||
+  ! grep -Fq "assert.deepEqual(OPENAI_REQUEST_OPTIONS, { timeout: 30_000, maxRetries: 0 })" "$ROOT_DIR/scripts/test-execute-parser.ts" ||
+  ! grep -Fq "Object.isFrozen(OPENAI_REQUEST_OPTIONS)" "$ROOT_DIR/scripts/test-execute-parser.ts"; then
+  printf '%s\n' "OpenAI execute requests must keep the tested 30-second zero-retry boundary." >&2
+  exit 1
+fi
+
+if ! grep -Fq "EXECUTE_RATE_LIMIT_MAX_REQUESTS = 10" "$API" ||
+  ! grep -Fq "EXECUTE_RATE_LIMIT_WINDOW_MS = 60_000" "$API" ||
+  ! grep -Fq "createFixedWindowRateLimiter" "$API" ||
+  ! grep -Fq "enforceExecuteRateLimit" "$API" ||
+  ! grep -Fq 'res.setHeader("Retry-After", String(rateLimit.retryAfterSeconds))' "$API" ||
+  ! grep -Fq "res.status(429)" "$API"; then
+  printf '%s\n' "Enabled docs-design execute attempts must keep the fixed-window budget." >&2
+  exit 1
+fi
+
+if ! grep -Fq "consumeCapacity(1_000)" "$ROOT_DIR/scripts/test-execute-parser.ts" ||
+  ! grep -Fq "consumeCapacity(61_000)" "$ROOT_DIR/scripts/test-execute-parser.ts" ||
+  ! grep -Fq "consumeCapacity(500)" "$ROOT_DIR/scripts/test-execute-parser.ts" ||
+  ! grep -Fq "enforceExecuteRateLimit(limitedResponse" "$ROOT_DIR/scripts/test-execute-parser.ts" ||
+  ! grep -Fq "assert.equal(limitedResponse.statusCode, 429)" "$ROOT_DIR/scripts/test-execute-parser.ts"; then
+  printf '%s\n' "Execute tests must cover budget rejection, rollover, and clock recovery." >&2
+  exit 1
+fi
+
+if ! awk '
+  /const executeApiToken = normalizeExecuteApiToken\(\)/ { auth_config = NR }
+  /isAuthorized\(req.headers.authorization, executeApiToken\)/ { auth_check = NR }
+  /if \(enforceExecuteRateLimit\(res\)\)/ { limiter = NR }
+  /hasJsonContentType\(req.headers\["content-type"\]\)/ { content_type = NR }
+  /normalizeExecuteBody\(req.body\)/ { body = NR }
+  /normalizeChatRequest\(extractParameters\(body.code\)\)/ { params = NR }
+  /const apiKey = normalizeOpenAIApiKey\(\)/ { api_key = NR }
+  /new OpenAI/ { client = NR }
+  END { exit !(auth_config && auth_check && content_type && body && params && api_key && limiter && client && auth_config < auth_check && auth_check < content_type && content_type < body && body < params && params < api_key && api_key < limiter && limiter < client) }
+' "$API" ||
+  ! grep -Fq "invalidContentTypeResponse.statusCode, 415" "$ROOT_DIR/scripts/test-execute-parser.ts" ||
+  ! grep -Fq "currentWindow = Date.now()" "$ROOT_DIR/scripts/test-execute-parser.ts"; then
+  printf '%s\n' "Execute capacity must apply after local validation and before provider setup." >&2
+  exit 1
+fi
+
+if ! grep -Fq 'export function normalizeExecuteApiToken(value: unknown = process.env.EXECUTE_API_TOKEN)' "$API" || \
+  ! grep -Fq 'Buffer.alloc(MAX_EXECUTE_API_TOKEN_LENGTH + 2)' "$API" || \
+  ! grep -Fq 'writeUInt16BE(providedToken.length, MAX_EXECUTE_API_TOKEN_LENGTH)' "$API" || \
+  ! grep -Fq 'timingSafeEqual(providedBuffer, expectedBuffer)' "$API" || \
+  ! grep -Fq 'Bearer realm="docs-execute"' "$API" || \
+  ! grep -Fq 'missingTokenResponse.statusCode, 503' "$ROOT_DIR/scripts/test-execute-parser.ts" || \
+  ! grep -Fq 'unauthorizedResponse.statusCode, 401' "$ROOT_DIR/scripts/test-execute-parser.ts" || \
+  ! grep -Fq '["Bearer test-execute-token"]' "$ROOT_DIR/scripts/test-execute-parser.ts"; then
+  printf '%s\n' "Execute API authentication must fail closed and reject ambiguous bearer headers." >&2
+  exit 1
+fi
+
+if ! grep -Fq 'req.once("aborted", abortProviderRequest)' "$API" || \
+  ! grep -Fq 'res.once("close", abortWhenResponseCloses)' "$API" || \
+  ! grep -Fq 'req.socket.once("close", abortWhenResponseCloses)' "$API" || \
+  ! grep -Fq 'requestAbortController.signal.aborted || req.aborted' "$API" || \
+  ! grep -Fq 'upstreamDisconnected.promise' "$ROOT_DIR/scripts/test-execute-provider.ts" || \
+  ! grep -Fq 'slowRequestDisconnected.promise' "$ROOT_DIR/scripts/test-execute-http.mjs"; then
+  printf '%s\n' "Client disconnects must abort in-flight provider requests with focused and live coverage." >&2
+  exit 1
+fi
+
+if ! grep -Fq 'export function normalizeOpenAIApiKey(value: unknown = process.env.OPENAI_API_KEY)' "$API" || \
+  ! grep -Fq 'return value.trim() || null' "$API" || \
+  ! grep -Fq 'const openai = new OpenAI({ apiKey })' "$API" || \
+  grep -Fq 'new OpenAI({ apiKey: process.env.OPENAI_API_KEY })' "$API" || \
+  ! grep -Fq 'delete process.env.OPENAI_API_KEY' "$ROOT_DIR/scripts/test-execute-parser.ts" || \
+  ! grep -Fq 'normalizeOpenAIApiKey(), null' "$ROOT_DIR/scripts/test-execute-parser.ts" || \
+  ! grep -Fq 'normalizeOpenAIApiKey("   "), null' "$ROOT_DIR/scripts/test-execute-parser.ts" || \
+  ! grep -Fq 'normalizeOpenAIApiKey("  test-api-key  "), "test-api-key"' "$ROOT_DIR/scripts/test-execute-parser.ts" || \
+  ! grep -Fq 'blankApiKeyResponse.statusCode, 503' "$ROOT_DIR/scripts/test-execute-parser.ts" || \
+  ! grep -Fq 'blankApiKeyResponse.headers["Cache-Control"], EXECUTE_CACHE_CONTROL' "$ROOT_DIR/scripts/test-execute-parser.ts"; then
+  printf '%s\n' "OpenAI API key configuration must reject blank values before execute capacity or provider setup." >&2
+  exit 1
+fi
+
+if [ ! -f "$NONBLANK_API_KEY_PLAN" ] || \
+  ! grep -Fq 'status: completed' "$NONBLANK_API_KEY_PLAN" || \
+  ! grep -Fq 'make check' "$NONBLANK_API_KEY_PLAN" || \
+  ! grep -Fq 'hostile mutations' "$NONBLANK_API_KEY_PLAN"; then
+  printf '%s\n' "Nonblank OpenAI API key plan must record completed verification." >&2
+  exit 1
+fi
+
+if ! tr '\n' ' ' < "$README" | tr -s '[:space:]' ' ' | grep -Fq 'Whitespace-only OpenAI API keys are treated as missing before execute capacity is consumed' || \
+  ! tr '\n' ' ' < "$ROOT_DIR/SECURITY.md" | tr -s '[:space:]' ' ' | grep -Fq 'Whitespace-only OpenAI API keys must be rejected before execute capacity or provider setup' || \
+  ! grep -Fq 'Rejected whitespace-only OpenAI API keys before execute capacity consumption' "$ROOT_DIR/CHANGES.md" || \
+  ! grep -Fq 'Reject blank OpenAI API keys before execute capacity consumption' "$VISION"; then
+  printf '%s\n' "Nonblank OpenAI API key documentation is incomplete." >&2
+  exit 1
+fi
+
 if ! grep -Fq 'value.trim().toLowerCase() === "true"' "$API" ||
   ! grep -Fq 'return res.status(503).json({ error: "Execute API is disabled" })' "$API"; then
   printf '%s\n' "Execute API must stay disabled unless explicitly enabled." >&2
   exit 1
 fi
 
-if ! grep -Fq "content.trim().length === 0" "$API"; then
-  printf '%s\n' "execute API must reject whitespace-only message content." >&2
+if ! grep -Fq "function hasVisibleMessageContent" "$API" || \
+  ! grep -Fq '!hasVisibleMessageContent(content)' "$API" || \
+  ! grep -Fq '"\u2066\u2069"' "$ROOT_DIR/scripts/test-execute-parser.ts"; then
+  printf '%s\n' "execute API must reject whitespace- and format-control-only message content." >&2
   exit 1
 fi
 
@@ -265,9 +622,45 @@ if ! grep -Fq "process.env.OPENAI_ALLOWED_MODELS = \"gpt-4o-mini\"" "$ROOT_DIR/s
   exit 1
 fi
 
+if ! grep -Fq 'const configuredModelList = process.env.OPENAI_ALLOWED_MODELS;' "$API" || \
+  ! grep -Fq 'if (configuredModelList === undefined)' "$API" || \
+  ! grep -Fq 'return new Set(configuredModels.filter((model) => defaultAllowedModels.has(model)))' "$API" || \
+  ! grep -Fq 'for (const emptyConfiguration of ["   ", " , , "])' "$ROOT_DIR/scripts/test-execute-parser.ts" || \
+  [ "$(grep -Fc 'delete process.env.OPENAI_ALLOWED_MODELS;' "$ROOT_DIR/scripts/test-execute-parser.ts")" -lt 2 ] || \
+  ! grep -Fq 'content: "Use default model."' "$ROOT_DIR/scripts/test-execute-parser.ts"; then
+  printf '%s\n' "Explicit empty model configuration must fail closed with parser coverage." >&2
+  exit 1
+fi
+
+if [ ! -f "$EMPTY_MODEL_ALLOWLIST_PLAN" ] || \
+  ! grep -Fq 'Status: Completed' "$EMPTY_MODEL_ALLOWLIST_PLAN" || \
+  ! grep -Fq 'execute parser tests passed' "$EMPTY_MODEL_ALLOWLIST_PLAN" || \
+  ! grep -Fq 'hostile mutations were rejected' "$EMPTY_MODEL_ALLOWLIST_PLAN" || \
+  ! grep -Fq 'external working directory' "$EMPTY_MODEL_ALLOWLIST_PLAN"; then
+  printf '%s\n' "Explicit empty model allowlist plan must record completed verification." >&2
+  exit 1
+fi
+
+if ! tr '\n' ' ' < "$README" | tr -s '[:space:]' ' ' | grep -Fq 'Explicitly blank or comma-only configuration allows no models' || \
+  ! grep -Fq 'Explicitly empty model allowlists must fail closed' "$ROOT_DIR/SECURITY.md" || \
+  ! grep -Fq 'Fail closed for explicitly empty model allowlists' "$VISION" || \
+  ! grep -Fq 'Made explicitly empty model allowlists fail closed' "$ROOT_DIR/CHANGES.md"; then
+  printf '%s\n' "Project guidance must document explicit empty model allowlist behavior." >&2
+  exit 1
+fi
+
 if ! grep -Fq "hasJsonContentType(\"Application/JSON; charset=utf-8\")" "$ROOT_DIR/scripts/test-execute-parser.ts" ||
   ! grep -Fq "hasJsonContentType(\"text/plain\")" "$ROOT_DIR/scripts/test-execute-parser.ts"; then
   printf '%s\n' "Parser tests must cover JSON content-type enforcement." >&2
+  exit 1
+fi
+
+if [ "$(printf '%s\n' "$CONTENT_TYPE_HELPER" | grep -Fc 'typeof contentType !== "string" || contentType.includes(",")')" -ne 1 ] ||
+  ! grep -Fq 'hasJsonContentType(["text/plain", "application/json"]), false' "$ROOT_DIR/scripts/test-execute-parser.ts" ||
+  ! grep -Fq 'hasJsonContentType(["application/json", "application/json"]), false' "$ROOT_DIR/scripts/test-execute-parser.ts" ||
+  ! grep -Fq 'hasJsonContentType("application/json; charset=utf-8, text/plain"), false' "$ROOT_DIR/scripts/test-execute-parser.ts" ||
+  ! grep -Fq 'hasJsonContentType([]), false' "$ROOT_DIR/scripts/test-execute-parser.ts"; then
+  printf '%s\n' "Execute content-type validation must reject every multi-value header." >&2
   exit 1
 fi
 
@@ -284,6 +677,41 @@ fi
 
 if ! grep -Fq "body: JSON.stringify({ code: codeContent })" "$EDITOR"; then
   printf '%s\n' "Editor must post the current code content to the execute API." >&2
+  exit 1
+fi
+
+if ! grep -Fq 'type="password"' "$EDITOR" || \
+  ! grep -Fq 'autoComplete="off"' "$EDITOR" || \
+  ! grep -Fq 'Authorization: `Bearer ${executeApiToken}`' "$EDITOR" || \
+  grep -Eq 'localStorage|sessionStorage|NEXT_PUBLIC_.*TOKEN' "$EDITOR"; then
+  printf '%s\n' "Editor must send a non-persistent bearer token without exposing it through public configuration." >&2
+  exit 1
+fi
+
+if ! grep -Fq 'import { javascript } from "@codemirror/lang-javascript";' "$EDITOR" || \
+  [ "$(grep -Fc 'extensions={[javascript({ typescript: true })]}' "$EDITOR")" -ne 2 ] || \
+  grep -Fq '@codemirror/lang-python' "$EDITOR" || \
+  grep -Fq 'python()' "$EDITOR"; then
+  printf '%s\n' "Editor must use the JavaScript CodeMirror extension with TypeScript parsing." >&2
+  exit 1
+fi
+
+if ! grep -Fq 'status: completed' "$EDITOR_JAVASCRIPT_PLAN" || \
+  ! grep -Fq 'make check' "$EDITOR_JAVASCRIPT_PLAN" || \
+  ! grep -Fq 'hostile mutations were rejected' "$EDITOR_JAVASCRIPT_PLAN" || \
+  ! grep -Fq '8416c6dab5b4bf88cf2c9ded7b1349ddf2acf433' "$EDITOR_JAVASCRIPT_PLAN" || \
+  ! grep -Fq 'push run `27542936590`' "$EDITOR_JAVASCRIPT_PLAN" || \
+  ! grep -Fq 'pull-request run `27542942739`' "$EDITOR_JAVASCRIPT_PLAN" || \
+  ! grep -Fq 'external working directory' "$EDITOR_JAVASCRIPT_PLAN"; then
+  printf '%s\n' "Editor JavaScript language plan must record completed verification." >&2
+  exit 1
+fi
+
+if ! grep -Fq 'CodeMirror JavaScript extension with TypeScript parsing enabled' "$README" || \
+  ! grep -Fq 'CodeMirror JavaScript extension with TypeScript parsing enabled' "$ROOT_DIR/AGENTS.md" || \
+  ! grep -Fq 'CodeMirror JavaScript extension with TypeScript parsing enabled' "$VISION" || \
+  ! grep -Fq 'Aligned the executable docs editor with the CodeMirror JavaScript extension' "$ROOT_DIR/CHANGES.md"; then
+  printf '%s\n' "Project guidance must document the executable editor language contract." >&2
   exit 1
 fi
 
@@ -419,6 +847,84 @@ if ! grep -Fq "status: completed" "$EXECUTE_ENABLE_PLAN" ||
   exit 1
 fi
 
+if ! grep -Fq "status: completed" "$REQUEST_TIMEOUT_PLAN" ||
+  ! grep -Fq "make check" "$REQUEST_TIMEOUT_PLAN" ||
+  ! grep -Fq "Removing the per-request options failed" "$REQUEST_TIMEOUT_PLAN" ||
+  ! grep -Fq "Restoring two SDK retries failed" "$REQUEST_TIMEOUT_PLAN" ||
+  ! grep -Fq 'Downgrading the checked lockfile contract to `esbuild 0.28.0` failed' "$REQUEST_TIMEOUT_PLAN" ||
+  ! grep -Fq "zero vulnerabilities" "$REQUEST_TIMEOUT_PLAN"; then
+  printf '%s\n' "OpenAI request timeout plan must record completed verification." >&2
+  exit 1
+fi
+
+if ! grep -Fq "Ten eligible" "$README" ||
+  ! grep -Fq "process-local fixed-window budget" "$ROOT_DIR/SECURITY.md" ||
+  ! grep -Fq "shared upstream enforcement" "$VISION" ||
+  ! grep -Fq "Added a process-local fixed-window execute budget" "$ROOT_DIR/CHANGES.md" ||
+  ! grep -Fq "provider-eligible requests consume capacity" "$ROOT_DIR/AGENTS.md"; then
+  printf '%s\n' "Project guidance must document the docs-design execute request budget." >&2
+  exit 1
+fi
+
+if ! grep -Fq "Provider-eligible requests consume the process-local budget" "$README" ||
+  ! grep -Fq "locally valid, configured requests consume capacity" "$ROOT_DIR/SECURITY.md" ||
+  ! grep -Fq "Consume execute capacity only after local validation" "$VISION" ||
+  ! grep -Fq "Moved execute capacity consumption after local validation" "$ROOT_DIR/CHANGES.md"; then
+  printf '%s\n' "Project guidance must document provider-eligible budget consumption." >&2
+  exit 1
+fi
+
+if ! grep -Fq "Status: Completed" "$PROVIDER_ELIGIBLE_BUDGET_PLAN" ||
+  ! grep -Fq "Node.js 20.19.5, 22.22.2, and 24.16.0" "$PROVIDER_ELIGIBLE_BUDGET_PLAN" ||
+  ! grep -Fq "hostile mutations were rejected" "$PROVIDER_ELIGIBLE_BUDGET_PLAN" ||
+  ! grep -Fq "No live OpenAI" "$PROVIDER_ELIGIBLE_BUDGET_PLAN"; then
+  printf '%s\n' "Docs-design provider-eligible budget plan must record completed verification." >&2
+  exit 1
+fi
+
+if ! grep -Fq "status: completed" "$EXECUTE_RATE_BUDGET_PLAN" ||
+  ! grep -Fq "Node.js 20.19.5, 22.22.2, and 24.16.0" "$EXECUTE_RATE_BUDGET_PLAN" ||
+  ! grep -Fq "hostile mutations were rejected" "$EXECUTE_RATE_BUDGET_PLAN" ||
+  ! grep -Fq "no live OpenAI" "$EXECUTE_RATE_BUDGET_PLAN"; then
+  printf '%s\n' "Docs-design execute budget plan must record completed verification." >&2
+  exit 1
+fi
+
+if ! grep -Fq 'EXECUTE_CACHE_CONTROL = "no-store"' "$API" ||
+  ! grep -Fq 'res.setHeader("Cache-Control", EXECUTE_CACHE_CONTROL)' "$API" ||
+  ! grep -Fq 'assert.equal(EXECUTE_CACHE_CONTROL, "no-store")' "$ROOT_DIR/scripts/test-execute-parser.ts" ||
+  ! grep -Fq 'methodResponse.headers["Cache-Control"], EXECUTE_CACHE_CONTROL' "$ROOT_DIR/scripts/test-execute-parser.ts" ||
+  ! grep -Fq 'headers["Cache-Control"], EXECUTE_CACHE_CONTROL' "$ROOT_DIR/scripts/test-execute-parser.ts"; then
+  printf '%s\n' "Execute API must keep the tested route-wide no-store policy." >&2
+  exit 1
+fi
+
+if ! grep -Fq "Cache-Control: no-store" "$README" ||
+  ! grep -Fq "Cache-Control: no-store" "$ROOT_DIR/SECURITY.md" ||
+  ! grep -Fq "Cache-Control: no-store" "$VISION" ||
+  ! grep -Fq "Cache-Control: no-store" "$ROOT_DIR/CHANGES.md" ||
+  ! grep -Fq "Cache-Control: no-store" "$ROOT_DIR/AGENTS.md"; then
+  printf '%s\n' "Project guidance must document the execute response cache boundary." >&2
+  exit 1
+fi
+
+if ! grep -Fq "status: completed" "$NO_STORE_PLAN" ||
+  ! grep -Fq "make check" "$NO_STORE_PLAN" ||
+  ! grep -Fq "hostile mutations were rejected" "$NO_STORE_PLAN" ||
+  ! grep -Fq "No live OpenAI" "$NO_STORE_PLAN"; then
+  printf '%s\n' "Docs-design no-store plan must record completed verification." >&2
+  exit 1
+fi
+
+if ! grep -Fq "30-second timeout" "$README" ||
+  ! grep -Fq "zero SDK retries" "$README" ||
+  ! grep -Fq "30-second timeout" "$ROOT_DIR/SECURITY.md" ||
+  ! grep -Fq "SDK retries disabled" "$ROOT_DIR/VISION.md" ||
+  ! grep -Fq "30 seconds" "$ROOT_DIR/CHANGES.md"; then
+  printf '%s\n' "Project guidance must document the bounded provider-call contract." >&2
+  exit 1
+fi
+
 if ! grep -Fq "OPENAI_API_KEY" "$README" ||
   ! grep -Fq "OPENAI_ALLOWED_MODELS" "$README" ||
   ! grep -Fq "DOCS_EXECUTE_ENABLED" "$README" ||
@@ -430,6 +936,22 @@ if ! grep -Fq "OPENAI_API_KEY" "$README" ||
   ! grep -Fq "clears the ignored .next directory" "$README" ||
   ! grep -Fq "whitespace-only message content" "$README"; then
   printf '%s\n' "README must document API key, model allow-list, JSON content type, npm test, make check, clean build behavior, and blank message handling." >&2
+  exit 1
+fi
+
+if ! grep -Fq "rejects multi-value Content-Type headers" "$README" ||
+  ! grep -Fq "Ambiguous multi-value Content-Type headers" "$ROOT_DIR/SECURITY.md" ||
+  ! grep -Fq "Reject ambiguous multi-value content types" "$VISION" ||
+  ! grep -Fq "Rejected ambiguous multi-value Content-Type headers" "$ROOT_DIR/CHANGES.md"; then
+  printf '%s\n' "Project guidance must document the single content-type boundary." >&2
+  exit 1
+fi
+
+if ! grep -Fq "status: completed" "$SINGLE_CONTENT_TYPE_PLAN" ||
+  ! grep -Fq "make check" "$SINGLE_CONTENT_TYPE_PLAN" ||
+  ! grep -Fq "hostile mutations were rejected" "$SINGLE_CONTENT_TYPE_PLAN" ||
+  ! grep -Fq "no live OpenAI request" "$SINGLE_CONTENT_TYPE_PLAN"; then
+  printf '%s\n' "Single JSON content-type plan must record completed verification." >&2
   exit 1
 fi
 
@@ -472,6 +994,32 @@ if ! grep -Fq "own request, parameter, and message fields" "$README"; then
   printf '%s\n' "README must document own-field execute API validation." >&2
   exit 1
 fi
+
+if ! grep -Fq '!hasVisibleMessageContent(content)' "$API" ||
+  ! grep -Fq '"\u2060"' "$ROOT_DIR/scripts/test-execute-parser.ts" ||
+  ! grep -Fq 'content: "  Keep this spacing.  "' "$ROOT_DIR/scripts/test-execute-parser.ts"; then
+  printf '%s\n' "Execute message whitespace rejection and preservation coverage is incomplete." >&2
+  exit 1
+fi
+
+if ! grep -Fq "ASCII and Unicode whitespace-only message content" "$README" ||
+  ! grep -Fq "Unicode whitespace rejection and accepted-content preservation" "$ROOT_DIR/SECURITY.md" ||
+  ! grep -Fq "Verify Unicode message whitespace rejection" "$VISION" ||
+  ! grep -Fq "Added Unicode whitespace and accepted-content preservation regressions" "$ROOT_DIR/CHANGES.md"; then
+  printf '%s\n' "Project guidance must document the message whitespace verification contract." >&2
+  exit 1
+fi
+
+for message_whitespace_contract in \
+  "status: completed" \
+  "## Status: Completed" \
+  "## Verification Completed" \
+  "hostile mutations were rejected"; do
+  if ! grep -Fq "$message_whitespace_contract" "$MESSAGE_WHITESPACE_CONTRACT_PLAN"; then
+    printf '%s\n' "Message whitespace contract plan must record completed evidence: $message_whitespace_contract" >&2
+    exit 1
+  fi
+done
 
 if ! grep -Fq "check: verify" "$ROOT_DIR/Makefile"; then
   printf '%s\n' "Makefile must expose make check as the repository verification wrapper." >&2

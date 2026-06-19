@@ -1,5 +1,52 @@
 # Changes
 
+## 2026-06-19
+
+- Added fail-closed bearer authentication and a non-persistent editor token field
+  for the spend-capable execute route.
+- Rejected parameterized duplicate Content-Type values and format-control-only
+  chat messages before provider admission.
+- Aborted in-flight OpenAI requests when the client connection closes and added
+  focused provider plus built-server live HTTP regressions.
+
+## 2026-06-18
+
+- Refreshed four compatible direct dependencies while preserving Node 20,
+  TypeScript 5.9, patched esbuild, editor language behavior, and the complete
+  webpack production gate.
+
+## 2026-06-15
+
+- Aligned the executable docs editor with the CodeMirror JavaScript extension
+  and enabled TypeScript-compatible parsing.
+- Added Unicode whitespace and accepted-content preservation regressions for
+  execute messages.
+- Made explicitly empty model allowlists fail closed instead of restoring
+  built-in defaults.
+- Rejected whitespace-only OpenAI API keys before execute capacity consumption.
+
+## 2026-06-14
+
+- Added an exact-head docs-design integration verification matrix that
+  separates portable checks from sanitized responsive browser, deployment,
+  and provider evidence.
+- Added a tested `Cache-Control: no-store` policy to every execute API response
+  so code, model output, and route errors are not intentionally cached.
+
+## 2026-06-13
+
+- Moved execute capacity consumption after local validation and API-key checks
+  so invalid requests cannot exhaust provider-eligible request slots.
+- Rejected ambiguous multi-value Content-Type headers before execute request
+  body normalization while preserving single JSON values with parameters.
+- Added a process-local fixed-window execute budget that rejects excess
+  provider-eligible attempts with `429` and `Retry-After` before provider setup.
+- Bounded enabled OpenAI execute requests to 30 seconds and disabled automatic
+  SDK retries so one interactive request has a predictable provider window.
+- Added an immutable, executable request-options contract and baseline guard.
+- Retained Dependabot's exact `esbuild 0.28.1` lockfile update and added a
+  static contract preventing regression to the vulnerable resolution.
+
 ## 2026-06-12
 
 - Made the docs workspace responsive by stacking the sidebar and intro/editor
@@ -17,7 +64,8 @@
 - Added a GitHub Actions workflow that runs clean installs and `make check` on
   Node 20, 22, and 24 for pushes, pull requests, and manual dispatches.
 - Pinned GitHub Actions by commit, restricted workflow permissions to read-only,
-  and bounded verification jobs to 15 minutes.
+  disabled persisted checkout credentials, and bounded verification jobs to 15
+  minutes.
 - Updated Next, OpenAI, React, React DOM, React types, and CodeMirror lint while
   preserving the repository's explicit Webpack production build contract.
 - Raised the dependency audit gate to include moderate-severity findings and

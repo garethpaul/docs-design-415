@@ -2,6 +2,7 @@ import type { NextApiRequest, NextApiResponse } from "next";
 import OpenAI from "openai";
 import { parse } from "@babel/parser";
 import traverse from "@babel/traverse";
+import { timingSafeEqual } from "node:crypto";
 import type {
   ArrayExpression,
   Expression,
@@ -16,6 +17,7 @@ type JsonObject = { [key: string]: JsonValue };
 type ChatMessage = { role: "system" | "user" | "assistant"; content: string };
 type HeaderValue = string | string[] | undefined;
 type ExecuteBody = { code: string };
+type RateLimitDecision = { allowed: boolean; retryAfterSeconds: number };
 type ChatCompletionParams = {
   model: string;
   messages: ChatMessage[];
@@ -34,6 +36,11 @@ const MAX_MESSAGES = 20;
 const MAX_MESSAGE_CONTENT_LENGTH = 8000;
 const MAX_COMPLETION_TOKENS = 2048;
 const DEFAULT_COMPLETION_TOKENS = 512;
+const MAX_EXECUTE_API_TOKEN_LENGTH = 256;
+export const EXECUTE_RATE_LIMIT_MAX_REQUESTS = 10;
+export const EXECUTE_RATE_LIMIT_WINDOW_MS = 60_000;
+export const EXECUTE_CACHE_CONTROL = "no-store";
+export const OPENAI_REQUEST_OPTIONS = Object.freeze({ timeout: 30_000, maxRetries: 0 });
 const ALLOWED_MESSAGE_ROLES = new Set(["system", "user", "assistant"]);
 const ALLOWED_BODY_FIELDS = new Set(["code"]);
 const ALLOWED_MESSAGE_FIELDS = new Set(["role", "content"]);
@@ -57,6 +64,61 @@ export const config = {
     },
   },
 };
+
+export function createFixedWindowRateLimiter(maxRequests: number, windowMs: number) {
+  if (!Number.isInteger(maxRequests) || maxRequests <= 0) {
+    throw new TypeError("maxRequests must be a positive integer");
+  }
+  if (!Number.isInteger(windowMs) || windowMs <= 0) {
+    throw new TypeError("windowMs must be a positive integer");
+  }
+
+  let windowStartedAt: number | null = null;
+  let requestCount = 0;
+
+  return (now = Date.now()): RateLimitDecision => {
+    if (!Number.isFinite(now)) {
+      throw new TypeError("now must be finite");
+    }
+
+    if (
+      windowStartedAt === null ||
+      now < windowStartedAt ||
+      now - windowStartedAt >= windowMs
+    ) {
+      windowStartedAt = now;
+      requestCount = 0;
+    }
+
+    const remainingMs = Math.max(1, windowMs - (now - windowStartedAt));
+    const retryAfterSeconds = Math.max(1, Math.ceil(remainingMs / 1000));
+    if (requestCount >= maxRequests) {
+      return { allowed: false, retryAfterSeconds };
+    }
+
+    requestCount += 1;
+    return { allowed: true, retryAfterSeconds };
+  };
+}
+
+const consumeExecuteCapacity = createFixedWindowRateLimiter(
+  EXECUTE_RATE_LIMIT_MAX_REQUESTS,
+  EXECUTE_RATE_LIMIT_WINDOW_MS,
+);
+
+export function enforceExecuteRateLimit(
+  res: NextApiResponse<unknown | ErrorResponse>,
+  now = Date.now(),
+) {
+  const rateLimit = consumeExecuteCapacity(now);
+  if (rateLimit.allowed) {
+    return false;
+  }
+
+  res.setHeader("Retry-After", String(rateLimit.retryAfterSeconds));
+  res.status(429).json({ error: "Execute API request limit exceeded" });
+  return true;
+}
 
 function isNamedMember(expression: unknown, propertyName: string): expression is MemberExpression {
   const member = expression as MemberExpression;
@@ -206,30 +268,82 @@ export function extractParameters(code: string): JsonObject | null {
 
 function allowedModels() {
   const defaultAllowedModels = new Set(DEFAULT_ALLOWED_MODELS);
-  const configuredModels = process.env.OPENAI_ALLOWED_MODELS?.split(",")
-    .map((model) => model.trim())
-    .filter(Boolean);
-
-  if (!configuredModels?.length) {
+  const configuredModelList = process.env.OPENAI_ALLOWED_MODELS;
+  if (configuredModelList === undefined) {
     return defaultAllowedModels;
   }
+
+  const configuredModels = configuredModelList
+    .split(",")
+    .map((model) => model.trim())
+    .filter(Boolean);
 
   return new Set(configuredModels.filter((model) => defaultAllowedModels.has(model)));
 }
 
 export function hasJsonContentType(contentType: HeaderValue): boolean {
-  if (Array.isArray(contentType)) {
-    return contentType.some(hasJsonContentType);
+  if (typeof contentType !== "string" || contentType.includes(",")) {
+    return false;
   }
 
   return (
-    typeof contentType === "string" &&
     contentType.split(";")[0].trim().toLowerCase() === "application/json"
   );
 }
 
+function hasVisibleMessageContent(content: string) {
+  return content
+    .replace(/[\u00ad\u061c\u180e\u200b-\u200f\u202a-\u202e\u2060-\u206f\ufeff\ufff9-\ufffb]/g, "")
+    .trim().length > 0;
+}
+
 export function isExecuteApiEnabled(value = process.env.DOCS_EXECUTE_ENABLED): boolean {
   return typeof value === "string" && value.trim().toLowerCase() === "true";
+}
+
+export function normalizeOpenAIApiKey(value: unknown = process.env.OPENAI_API_KEY) {
+  if (typeof value !== "string") {
+    return null;
+  }
+
+  return value.trim() || null;
+}
+
+export function normalizeExecuteApiToken(value: unknown = process.env.EXECUTE_API_TOKEN) {
+  if (typeof value !== "string") {
+    return null;
+  }
+
+  const token = value.trim();
+  return token !== "" &&
+    token.length <= MAX_EXECUTE_API_TOKEN_LENGTH &&
+    /^[\x21-\x7e]+$/.test(token)
+    ? token
+    : null;
+}
+
+function bearerToken(authorization: HeaderValue) {
+  if (typeof authorization !== "string") {
+    return null;
+  }
+
+  const match = /^Bearer ([\x21-\x7e]{1,256})$/.exec(authorization);
+  return match?.[1] ?? null;
+}
+
+function tokensMatch(providedToken: string, expectedToken: string) {
+  const providedBuffer = Buffer.alloc(MAX_EXECUTE_API_TOKEN_LENGTH + 2);
+  const expectedBuffer = Buffer.alloc(MAX_EXECUTE_API_TOKEN_LENGTH + 2);
+  providedBuffer.write(providedToken, 0, MAX_EXECUTE_API_TOKEN_LENGTH, "ascii");
+  expectedBuffer.write(expectedToken, 0, MAX_EXECUTE_API_TOKEN_LENGTH, "ascii");
+  providedBuffer.writeUInt16BE(providedToken.length, MAX_EXECUTE_API_TOKEN_LENGTH);
+  expectedBuffer.writeUInt16BE(expectedToken.length, MAX_EXECUTE_API_TOKEN_LENGTH);
+  return timingSafeEqual(providedBuffer, expectedBuffer);
+}
+
+function isAuthorized(authorization: HeaderValue, expectedToken: string) {
+  const providedToken = bearerToken(authorization);
+  return providedToken !== null && tokensMatch(providedToken, expectedToken);
 }
 
 export function normalizeExecuteBody(body: unknown): ExecuteBody | null {
@@ -292,7 +406,7 @@ function normalizeMessages(value: JsonValue | undefined): ChatMessage[] | null {
       !ALLOWED_MESSAGE_ROLES.has(role) ||
       typeof content !== "string" ||
       content.length === 0 ||
-      content.trim().length === 0 ||
+      !hasVisibleMessageContent(content) ||
       content.length > MAX_MESSAGE_CONTENT_LENGTH
     ) {
       return null;
@@ -418,6 +532,8 @@ export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse<unknown | ErrorResponse>,
 ) {
+  res.setHeader("Cache-Control", EXECUTE_CACHE_CONTROL);
+
   if (req.method !== "POST") {
     res.setHeader("Allow", "POST");
     return res.status(405).json({ error: "Method not allowed" });
@@ -425,6 +541,16 @@ export default async function handler(
 
   if (!isExecuteApiEnabled()) {
     return res.status(503).json({ error: "Execute API is disabled" });
+  }
+
+  const executeApiToken = normalizeExecuteApiToken();
+  if (!executeApiToken) {
+    return res.status(503).json({ error: "Execute API authentication is not configured" });
+  }
+
+  if (!isAuthorized(req.headers.authorization, executeApiToken)) {
+    res.setHeader("WWW-Authenticate", 'Bearer realm="docs-execute"');
+    return res.status(401).json({ error: "Unauthorized" });
   }
 
   if (!hasJsonContentType(req.headers["content-type"])) {
@@ -447,17 +573,45 @@ export default async function handler(
     });
   }
 
-  if (!process.env.OPENAI_API_KEY) {
+  const apiKey = normalizeOpenAIApiKey();
+  if (!apiKey) {
     return res.status(503).json({ error: "OPENAI_API_KEY is not configured" });
   }
 
+  if (enforceExecuteRateLimit(res)) {
+    return;
+  }
+
+  const requestAbortController = new AbortController();
+  const abortProviderRequest = () => requestAbortController.abort();
+  const abortWhenResponseCloses = () => {
+    if (!res.writableEnded) {
+      abortProviderRequest();
+    }
+  };
+  if (req.aborted) {
+    abortProviderRequest();
+  } else {
+    req.once("aborted", abortProviderRequest);
+    res.once("close", abortWhenResponseCloses);
+    req.socket.once("close", abortWhenResponseCloses);
+  }
+
   try {
-    const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+    const openai = new OpenAI({ apiKey });
     const completion = await openai.chat.completions.create(
       params as ChatCompletionCreateParamsNonStreaming,
+      { ...OPENAI_REQUEST_OPTIONS, signal: requestAbortController.signal },
     );
     return res.status(200).json(completion.choices);
   } catch {
+    if (requestAbortController.signal.aborted || req.aborted) {
+      return;
+    }
     return res.status(502).json({ error: "OpenAI request failed" });
+  } finally {
+    req.off("aborted", abortProviderRequest);
+    res.off("close", abortWhenResponseCloses);
+    req.socket.off("close", abortWhenResponseCloses);
   }
 }

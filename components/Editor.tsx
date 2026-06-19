@@ -1,5 +1,5 @@
 import CodeMirror from "@uiw/react-codemirror";
-import { python } from "@codemirror/lang-python";
+import { javascript } from "@codemirror/lang-javascript";
 import { createTheme } from "@uiw/codemirror-themes";
 import { tags as t } from "@lezer/highlight";
 import { Button } from "@radix-ui/themes";
@@ -36,7 +36,7 @@ const myTheme = createTheme({
   ],
 });
 
-const pyLang = `import OpenAI from 'openai';
+const defaultCode = `import OpenAI from 'openai';
 
 const openai = new OpenAI();
 
@@ -53,7 +53,8 @@ async function main() {
 main();`;
 
 export default function Editor() {
-  const [codeContent, setCodeContent] = useState(pyLang);
+  const [codeContent, setCodeContent] = useState(defaultCode);
+  const [executeApiToken, setExecuteApiToken] = useState("");
   const [result, setResult] = useState<unknown>(null);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -67,6 +68,7 @@ export default function Editor() {
       const res = await fetch("/api/execute/code", {
         method: "POST",
         headers: {
+          Authorization: `Bearer ${executeApiToken}`,
           "Content-Type": "application/json",
         },
         body: JSON.stringify({ code: codeContent }),
@@ -89,17 +91,28 @@ export default function Editor() {
       <CodeMirror
         value={codeContent}
         theme={myTheme}
-        extensions={[python()]}
+        extensions={[javascript({ typescript: true })]}
         onChange={(value) => {
           setCodeContent(value);
         }}
       />
-      <div style={{ width: "100px", padding: "10px" }}>
+      <div className={styles.executeControls}>
+        <label className={styles.tokenField}>
+          <span>Execute API token</span>
+          <input
+            type="password"
+            autoComplete="off"
+            spellCheck={false}
+            value={executeApiToken}
+            onChange={(event) => setExecuteApiToken(event.target.value)}
+            placeholder="Required to run"
+          />
+        </label>
         {/* have the button make a call to the fetchCode function */}
         <Button
           onClick={fetchCode}
           style={{ backgroundColor: "#0CA37F", color: "#fff" }}
-          disabled={loading}
+          disabled={loading || executeApiToken.trim() === ""}
         >
           {loading ? (
             // Spinner SVG or another spinner component
@@ -128,7 +141,7 @@ export default function Editor() {
         <CodeMirror
           value={formattedResult}
           theme={myTheme}
-          extensions={[python()]}
+          extensions={[javascript({ typescript: true })]}
           readOnly
         />
       )}

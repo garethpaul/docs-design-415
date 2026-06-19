@@ -67,12 +67,15 @@ them, leaving keyboard users without a visible location.
 
 ## Verification
 
-- `npm test` passes with a production Next.js build and zero audit findings.
-- Desktop screenshot at 1440x1000 preserves the two-rail workspace.
-- Mobile screenshot at 390x844 shows a bounded sidebar and readable content.
-- Focus-state screenshot confirms the CTA outline remains visibly distinct.
-- Removing the mobile stack rule fails the baseline with the workspace-contract
-  error.
-- Removing the CTA `:focus-visible` rule fails the baseline with the
-  keyboard-focus error.
+- Node 20.19.5, 22.22.2, and 24.16.0: clean `npm ci` followed by `make check`
+  passed TypeScript, parser tests, the Next.js production build, the source
+  baseline, and `npm audit` with zero vulnerabilities.
+- Chrome for Testing 148 desktop screenshot at 1440x1000 preserves the
+  250-pixel rail, split intro/editor workspace, and hydrated CodeMirror editor.
+- Mobile screenshot at 390x844 shows a bounded sidebar, stacked editor, readable
+  content, and a document width equal to the 390-pixel viewport.
+- Focus-state screenshot confirms the CTA has a distinct solid 3-pixel outline.
+- Six isolated hostile mutations were rejected: removing the mobile stack,
+  removing CTA focus visibility, removing a language label, restoring checkout
+  credentials, adding write permissions, and marking this plan incomplete.
 - `git diff --check` passes.
