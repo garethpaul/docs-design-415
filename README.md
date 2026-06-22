@@ -118,6 +118,9 @@ layout on desktop. At 900 pixels and below, the sidebar becomes a bounded
 full-width region and the content stacks into one column. Top navigation remains
 horizontally available, and links, search, CTA, and language controls expose
 visible keyboard focus. Language icon controls include accessible labels.
+All 28 sidebar topics resolve through canonical `/docs/<section>/<topic>` routes
+generated from the shared documentation declaration; unknown and legacy
+single-segment topic paths return the framework 404 response.
 
 When the required SDK or runtime is unavailable, use static checks and source review first, then verify on a machine that has the matching platform toolchain.
 

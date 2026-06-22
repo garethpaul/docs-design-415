@@ -9,6 +9,49 @@
   min-width: 0;
 }
 
+.topicContent {
+  align-items: flex-start;
+  display: flex;
+  justify-content: center;
+}
+
+.topicArticle {
+  max-width: 720px;
+  padding: 72px 48px;
+  width: 100%;
+}
+
+.topicSection {
+  color: #6e6e80;
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  margin: 0 0 12px;
+}
+
+.topicArticle h1 {
+  font-size: clamp(2rem, 5vw, 3.25rem);
+  letter-spacing: -0.035em;
+  margin: 0;
+}
+
+.topicSummary {
+  color: #35353f;
+  font-size: 1.125rem;
+  line-height: 1.7;
+  margin: 24px 0 32px;
+}
+
+.playgroundLink {
+  color: #087f67;
+  font-weight: 600;
+}
+
+.playgroundLink:focus-visible {
+  outline: 2px solid #0ca37f;
+  outline-offset: 3px;
+}
+
 .mainContent {
   padding: 20px;
   overflow: hidden;
@@ -49,5 +92,9 @@
   .introText {
     font-size: 28px;
     line-height: 35px;
+  }
+
+  .topicArticle {
+    padding: 32px 0;
   }
 }

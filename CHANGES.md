@@ -1,5 +1,7 @@
 # Changes
 
+- Added canonical, data-driven topic routes for all 28 documentation sidebar links, with dependency-free route and hostile-mutation coverage.
+
 ## 2026-06-19
 
 - Added fail-closed bearer authentication and a non-persistent editor token field

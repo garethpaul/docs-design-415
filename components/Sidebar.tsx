@@ -1,51 +1,6 @@
 import React from "react";
 import styles from "./Sidebar.module.css";
-
-const sections = [
-  {
-    title: "GET STARTED",
-    links: [
-      "Introduction",
-      "Overview",
-      "Key concepts",
-      "Next steps",
-      "Quickstart",
-      "Libraries",
-      "Models",
-      "Deprecations",
-      "Tutorials",
-      "Policies",
-    ],
-  },
-  {
-    title: "GUIDES",
-    links: [
-      "GPT",
-      "GPT best practices",
-      "Image generation",
-      "Fine-tuning",
-      "Embeddings",
-      "Speech to text",
-      "Moderation",
-      "Rate limits",
-      "Error codes",
-      "Safety best practices",
-      "Production best practices",
-    ],
-  },
-  {
-    title: "CHAT PLUGINS",
-    links: [
-      "Introduction",
-      "Getting started",
-      "Authentication",
-      "Examples",
-      "Production",
-      "Plugin review",
-      "Plugin policies",
-    ],
-  },
-];
+import docsContent from "./docs-content.json";
 
 const SidebarNav = () => {
   return (
@@ -78,17 +33,17 @@ const SidebarNav = () => {
           </button>
         </div>
 
-        {sections.map((section) => (
+        {docsContent.sections.map((section) => (
           <section key={section.title}>
             <h3 className={styles.sideNavHeader}>{section.title}</h3>
             <ul className={styles.sideNav}>
-              {section.links.map((link) => (
-                <li key={link}>
+              {section.links.map((topic) => (
+                <li key={topic.href}>
                   <a
-                    href={`/docs/${link.toLowerCase().replace(/ /g, "-")}`}
+                    href={topic.href}
                     className={styles.sideNavItem}
                   >
-                    {link}
+                    {topic.title}
                   </a>
                 </li>
               ))}
