@@ -8,11 +8,13 @@
     "type-check": "node node_modules/typescript/bin/tsc --noEmit",
     "test:parser": "node node_modules/tsx/dist/cli.mjs scripts/test-execute-parser.ts",
     "test:provider": "node node_modules/tsx/dist/cli.mjs scripts/test-execute-provider.ts",
+    "test:docs-routes": "node scripts/test-doc-routes.mjs",
+    "test:doc-route-mutations": "node scripts/test-doc-route-mutations.mjs",
     "test:http": "node scripts/test-execute-http.mjs",
     "test:mutations": "node scripts/test-review-mutations.mjs",
     "audit": "npm audit --audit-level=moderate",
     "check": "scripts/check-baseline.sh",
-    "test": "npm run type-check && npm run test:parser && npm run test:provider && npm run test:mutations && npm run build && npm run test:http && npm run check && npm run audit"
+    "test": "npm run test:docs-routes && npm run test:doc-route-mutations && npm run type-check && npm run test:parser && npm run test:provider && npm run test:mutations && npm run build && npm run test:http && npm run check && npm run audit"
   },
   "engines": {
     "node": ">=20.9.0"

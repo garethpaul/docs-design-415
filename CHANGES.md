@@ -1,5 +1,11 @@
 # Changes
 
+## 2026-06-25
+
+- Added canonical, data-driven topic routes for all 28 documentation sidebar links, with dependency-free route and hostile-mutation coverage.
+- Revalidated static generation, route-specific 404 behavior, built HTTP coverage,
+  and the shared sidebar declaration with an independent Codex review.
+
 ## 2026-06-19
 
 - Added fail-closed bearer authentication and a non-persistent editor token field

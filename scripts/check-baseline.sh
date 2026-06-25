@@ -11,6 +11,8 @@ SPLIT_STYLE="$ROOT_DIR/components/SplitFlexComponent.module.css"
 NAV_STYLE="$ROOT_DIR/components/Navigation.module.css"
 SIDEBAR_SOURCE="$ROOT_DIR/components/Sidebar.tsx"
 SIDEBAR_STYLE="$ROOT_DIR/components/Sidebar.module.css"
+DOCS_ROUTE_TEST="$ROOT_DIR/scripts/test-doc-routes.mjs"
+DOCS_ROUTE_MUTATIONS="$ROOT_DIR/scripts/test-doc-route-mutations.mjs"
 LANGUAGE_SOURCE="$ROOT_DIR/components/LanguageButton.tsx"
 LANGUAGE_STYLE="$ROOT_DIR/components/LanguageButton.module.css"
 CTA_STYLE="$ROOT_DIR/components/CTAButton.module.css"
@@ -64,16 +66,21 @@ for path in \
   "package-lock.json" \
   "pages/api/execute/code.ts" \
   "pages/docs.tsx" \
+  "pages/docs/[section]/[slug].tsx" \
   "pages/DocsPage.module.css" \
   "components/Editor.tsx" \
   "components/Editor.module.css" \
   "components/Navigation.module.css" \
   "components/Sidebar.tsx" \
+  "components/docs-content.json" \
   "components/Sidebar.module.css" \
   "components/SplitFlexComponent.module.css" \
   "components/LanguageButton.tsx" \
   "components/LanguageButton.module.css" \
   "components/CTAButton.module.css" \
+  "scripts/test-doc-routes.mjs" \
+  "scripts/test-doc-route-mutations.mjs" \
+  "docs/plans/2026-06-22-docs-sidebar-routes.md" \
   "docs/plans/2026-06-08-docs-design-check-wrapper.md" \
   "docs/plans/2026-06-08-docs-design-execute-api-baseline.md" \
   "docs/plans/2026-06-09-docs-design-clean-next-build.md" \
@@ -734,7 +741,7 @@ done
 if ! grep -Fq 'aria-label={label}' "$LANGUAGE_SOURCE" ||
   [ "$(grep -Ec '^[[:space:]]+label="' "$DOCS_PAGE")" -ne 4 ] ||
   ! grep -Fq '<section key={section.title}>' "$SIDEBAR_SOURCE" ||
-  ! grep -Fq '<li key={link}>' "$SIDEBAR_SOURCE"; then
+  ! grep -Fq '<li key={topic.href}>' "$SIDEBAR_SOURCE"; then
   printf '%s\n' "Docs language controls and sidebar lists must remain accessible and keyed." >&2
   exit 1
 fi
@@ -1030,6 +1037,9 @@ if ! grep -Fq "lint:" "$ROOT_DIR/Makefile"; then
   printf '%s\n' "Makefile must expose make lint for the source baseline guard." >&2
   exit 1
 fi
+
+node "$DOCS_ROUTE_TEST"
+node "$DOCS_ROUTE_MUTATIONS"
 
 npm --prefix "$ROOT_DIR" run test:parser
 

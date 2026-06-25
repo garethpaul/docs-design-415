@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { once } from "node:events";
 import { createServer, request as httpRequest } from "node:http";
 import { spawn } from "node:child_process";
+import { readFileSync } from "node:fs";
 
 function deferred() {
   let resolve;
@@ -44,6 +45,13 @@ const validCode = (content) => `await openai.chat.completions.create({
   model: "gpt-4o-mini",
   messages: [{ role: "user", content: ${JSON.stringify(content)} }]
 });`;
+
+const docsContent = JSON.parse(
+  readFileSync(new URL("../components/docs-content.json", import.meta.url), "utf8"),
+);
+const docsRoutes = docsContent.sections.flatMap((section) =>
+  section.links.map((topic) => ({ href: topic.href, title: topic.title })),
+);
 
 const slowRequestStarted = deferred();
 const slowRequestDisconnected = deferred();
@@ -99,6 +107,31 @@ next.stderr.on("data", (chunk) => { nextOutput += chunk; });
 const route = `http://127.0.0.1:${nextPort}/api/execute/code`;
 try {
   await waitForServer(`http://127.0.0.1:${nextPort}/docs`, next);
+
+  for (const topic of docsRoutes) {
+    const response = await fetch(`http://127.0.0.1:${nextPort}${topic.href}`);
+    assert.equal(response.status, 200, `${topic.href} must resolve`);
+    assert.match(await response.text(), new RegExp(`<h1[^>]*>${topic.title}</h1>`));
+  }
+
+  for (const missingPath of [
+    "/docs/introduction",
+    "/docs/Get-Started/introduction",
+    "/docs/get-started/not-a-topic",
+  ]) {
+    const response = await fetch(`http://127.0.0.1:${nextPort}${missingPath}`);
+    assert.equal(response.status, 404, `${missingPath} must not alias a topic route`);
+  }
+
+  const trailingSlash = await fetch(
+    `http://127.0.0.1:${nextPort}${docsRoutes[0].href}/`,
+    { redirect: "manual" },
+  );
+  assert.equal(trailingSlash.status, 308);
+  assert.equal(
+    new URL(trailingSlash.headers.get("location"), `http://127.0.0.1:${nextPort}`).pathname,
+    docsRoutes[0].href,
+  );
 
   const unauthorized = await fetch(route, {
     method: "POST",

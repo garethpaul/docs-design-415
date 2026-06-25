@@ -1,0 +1,190 @@
+{
+  "sections": [
+    {
+      "title": "GET STARTED",
+      "slug": "get-started",
+      "links": [
+        {
+          "title": "Introduction",
+          "slug": "introduction",
+          "href": "/docs/get-started/introduction",
+          "summary": "Learn what the interactive documentation prototype demonstrates and how its playground, navigation, and examples fit together."
+        },
+        {
+          "title": "Overview",
+          "slug": "overview",
+          "href": "/docs/get-started/overview",
+          "summary": "Review the prototype's main surfaces: the documentation rail, executable code editor, language controls, and guarded server proxy."
+        },
+        {
+          "title": "Key concepts",
+          "slug": "key-concepts",
+          "href": "/docs/get-started/key-concepts",
+          "summary": "Understand the core ideas represented here, including model requests, structured messages, server-side execution, and safe defaults."
+        },
+        {
+          "title": "Next steps",
+          "slug": "next-steps",
+          "href": "/docs/get-started/next-steps",
+          "summary": "Use the prototype as a starting point for deeper documentation, production authentication, distributed limits, and provider observability."
+        },
+        {
+          "title": "Quickstart",
+          "slug": "quickstart",
+          "href": "/docs/get-started/quickstart",
+          "summary": "Follow the shortest path through the sample: inspect the request, choose a language view, and run only against an explicitly enabled server."
+        },
+        {
+          "title": "Libraries",
+          "slug": "libraries",
+          "href": "/docs/get-started/libraries",
+          "summary": "See where client libraries belong in the request flow and why credentials and provider calls stay behind the server boundary."
+        },
+        {
+          "title": "Models",
+          "slug": "models",
+          "href": "/docs/get-started/models",
+          "summary": "Explore how the sample selects an allowed model and how deployments can narrow, but never silently expand, the checked-in allow-list."
+        },
+        {
+          "title": "Deprecations",
+          "slug": "deprecations",
+          "href": "/docs/get-started/deprecations",
+          "summary": "Plan for evolving model and API surfaces by keeping examples version-aware, validated, and explicit about unsupported behavior."
+        },
+        {
+          "title": "Tutorials",
+          "slug": "tutorials",
+          "href": "/docs/get-started/tutorials",
+          "summary": "Build guided learning flows around the playground while preserving the same validation, authorization, and spend-control boundaries."
+        },
+        {
+          "title": "Policies",
+          "slug": "policies",
+          "href": "/docs/get-started/policies",
+          "summary": "Connect implementation choices to usage policies, data handling expectations, and the deployment controls required beyond this prototype."
+        }
+      ]
+    },
+    {
+      "title": "GUIDES",
+      "slug": "guides",
+      "links": [
+        {
+          "title": "GPT",
+          "slug": "gpt",
+          "href": "/docs/guides/gpt",
+          "summary": "Use the editor request as a compact example of sending structured messages to a text model through a controlled server route."
+        },
+        {
+          "title": "GPT best practices",
+          "slug": "gpt-best-practices",
+          "href": "/docs/guides/gpt-best-practices",
+          "summary": "Keep prompts focused, validate request shape, constrain accepted models, and surface failures without exposing provider credentials."
+        },
+        {
+          "title": "Image generation",
+          "slug": "image-generation",
+          "href": "/docs/guides/image-generation",
+          "summary": "Treat image generation as a separate capability requiring its own request schema, output handling, policy checks, and user feedback."
+        },
+        {
+          "title": "Fine-tuning",
+          "slug": "fine-tuning",
+          "href": "/docs/guides/fine-tuning",
+          "summary": "Frame fine-tuning as a managed workflow with curated data, evaluation criteria, versioned artifacts, and explicit deployment decisions."
+        },
+        {
+          "title": "Embeddings",
+          "slug": "embeddings",
+          "href": "/docs/guides/embeddings",
+          "summary": "Use embeddings for similarity and retrieval workflows while defining input limits, storage boundaries, and evaluation up front."
+        },
+        {
+          "title": "Speech to text",
+          "slug": "speech-to-text",
+          "href": "/docs/guides/speech-to-text",
+          "summary": "Design transcription flows around explicit media handling, supported formats, bounded uploads, and clear processing states."
+        },
+        {
+          "title": "Moderation",
+          "slug": "moderation",
+          "href": "/docs/guides/moderation",
+          "summary": "Place moderation within a broader safety workflow that defines what is checked, how decisions are handled, and when humans intervene."
+        },
+        {
+          "title": "Rate limits",
+          "slug": "rate-limits",
+          "href": "/docs/guides/rate-limits",
+          "summary": "Handle capacity explicitly with bounded retries and backoff; the prototype's process-local budget is not a distributed production limiter."
+        },
+        {
+          "title": "Error codes",
+          "slug": "error-codes",
+          "href": "/docs/guides/error-codes",
+          "summary": "Translate validation, authorization, provider, timeout, and capacity failures into stable responses without leaking sensitive details."
+        },
+        {
+          "title": "Safety best practices",
+          "slug": "safety-best-practices",
+          "href": "/docs/guides/safety-best-practices",
+          "summary": "Layer request validation, authentication, policy enforcement, monitoring, and human review according to the application's risk."
+        },
+        {
+          "title": "Production best practices",
+          "slug": "production-best-practices",
+          "href": "/docs/guides/production-best-practices",
+          "summary": "Replace prototype controls with durable identity, distributed rate limits, observability, secret management, and tested failure recovery."
+        }
+      ]
+    },
+    {
+      "title": "CHAT PLUGINS",
+      "slug": "chat-plugins",
+      "links": [
+        {
+          "title": "Introduction",
+          "slug": "introduction",
+          "href": "/docs/chat-plugins/introduction",
+          "summary": "Understand plugin-style integrations as external capabilities with explicit schemas, trust boundaries, and user-visible actions."
+        },
+        {
+          "title": "Getting started",
+          "slug": "getting-started",
+          "href": "/docs/chat-plugins/getting-started",
+          "summary": "Begin with one narrowly scoped capability, a clear contract, predictable errors, and a local test path before connecting live services."
+        },
+        {
+          "title": "Authentication",
+          "slug": "authentication",
+          "href": "/docs/chat-plugins/authentication",
+          "summary": "Keep integration credentials server-side and choose an authentication model that makes user identity and delegated access explicit."
+        },
+        {
+          "title": "Examples",
+          "slug": "examples",
+          "href": "/docs/chat-plugins/examples",
+          "summary": "Use examples to demonstrate complete request and response contracts, including validation failures and safe handling of external data."
+        },
+        {
+          "title": "Production",
+          "slug": "production",
+          "href": "/docs/chat-plugins/production",
+          "summary": "Harden integrations with availability controls, auditability, revocable credentials, schema compatibility, and monitored dependencies."
+        },
+        {
+          "title": "Plugin review",
+          "slug": "plugin-review",
+          "href": "/docs/chat-plugins/plugin-review",
+          "summary": "Review declared capabilities, data access, authentication, failure modes, and user consent before treating an integration as ready."
+        },
+        {
+          "title": "Plugin policies",
+          "slug": "plugin-policies",
+          "href": "/docs/chat-plugins/plugin-policies",
+          "summary": "Document acceptable behavior and data use for integrations, then enforce those rules through product controls and operational review."
+        }
+      ]
+    }
+  ]
+}
