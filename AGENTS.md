@@ -62,6 +62,7 @@
 - The spend-capable execute route must remain disabled by default. `DOCS_EXECUTE_ENABLED` must normalize to exactly `true` before requests are proxied; this interlock does not replace authentication or rate limiting for public deployments.
 - Preserve the process-local budget so only provider-eligible requests consume capacity
   after local validation and before provider setup; do not describe it as distributed multi-instance enforcement.
+- Preserve the disconnect admission boundary: already-aborted requests must return after validation and API-key configuration but before the limiter.
 - Preserve `Cache-Control: no-store` on every execute API response so submitted
   code, provider output, and errors are not intentionally cached.
 - Preserve client-disconnect cancellation so abandoned requests stop upstream

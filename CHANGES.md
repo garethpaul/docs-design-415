@@ -1,5 +1,58 @@
 # Changes
 
+## 2026-06-26 07:41 PDT
+
+Priority: correctness and provider-capacity preservation.
+
+Summary:
+
+- Prevented already-disconnected execute requests from consuming the
+  process-local fixed-window provider budget.
+
+Work completed:
+
+- Added an early disconnect boundary after local validation and API-key
+  configuration but before rate-limit admission.
+- Added a real-provider-harness regression covering ten abandoned requests,
+  one connected request, and the existing in-flight cancellation behavior.
+- Added hostile mutation, baseline, documentation, and implementation-plan
+  contracts for the new ordering.
+
+Threads:
+
+- Execute API correctness, disconnect lifecycle, rate-limit admission, and
+  maintained verification evidence.
+
+Files changed:
+
+- `pages/api/execute/code.ts`, `scripts/test-execute-provider.ts`,
+  `scripts/test-review-mutations.mjs`, `scripts/check-baseline.sh`, project
+  guidance, and the pre-aborted capacity plans.
+
+Validation:
+
+- Red phase: without the guard, the connected provider request failed with
+  `connected request did not reach upstream; status 429`.
+- Green focused checks: `npm run test:provider` and `npm run test:parser`.
+- `make check` passed on Node.js 20.20.2, 22.16.0, and 24.17.0, including the
+  production build, live HTTP test, seven hostile mutations, and zero-vulnerability audit.
+- External Make passed from `/tmp` on Node.js 24.17.0. Hosted checks and
+  exact-head review are pending.
+
+Bugs and findings:
+
+- Ten valid requests carrying an existing aborted signal could exhaust the
+  per-process minute budget even though no response could be delivered.
+
+Blockers:
+
+- None for local implementation; hosted verification awaits the pull request.
+
+Next action:
+
+- Push the focused pull request, then verify hosted checks and the exact PR head
+  before merge.
+
 ## 2026-06-25
 
 - Refreshed compatible CodeMirror command/language patches and OpenAI 6.45.0,

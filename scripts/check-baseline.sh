@@ -36,6 +36,8 @@ REQUEST_TIMEOUT_PLAN="$ROOT_DIR/docs/plans/2026-06-13-docs-design-openai-request
 EXECUTE_RATE_BUDGET_PLAN="$ROOT_DIR/docs/plans/2026-06-13-docs-design-execute-fixed-window-budget.md"
 SINGLE_CONTENT_TYPE_PLAN="$ROOT_DIR/docs/plans/2026-06-13-single-json-content-type.md"
 PROVIDER_ELIGIBLE_BUDGET_PLAN="$ROOT_DIR/docs/plans/2026-06-13-docs-design-provider-eligible-budget.md"
+PREABORTED_CAPACITY_DESIGN="$ROOT_DIR/docs/plans/2026-06-26-preaborted-execute-capacity-design.md"
+PREABORTED_CAPACITY_PLAN="$ROOT_DIR/docs/plans/2026-06-26-preaborted-execute-capacity.md"
 NO_STORE_PLAN="$ROOT_DIR/docs/plans/2026-06-14-docs-design-execute-no-store.md"
 MAKE_ROOT_PLAN="$ROOT_DIR/docs/plans/2026-06-14-make-root-override-protection.md"
 INTEGRATION_VERIFICATION="$ROOT_DIR/INTEGRATION_VERIFICATION.md"
@@ -100,6 +102,8 @@ for path in \
   "docs/plans/2026-06-13-docs-design-execute-fixed-window-budget.md" \
   "docs/plans/2026-06-13-single-json-content-type.md" \
   "docs/plans/2026-06-13-docs-design-provider-eligible-budget.md" \
+  "docs/plans/2026-06-26-preaborted-execute-capacity-design.md" \
+  "docs/plans/2026-06-26-preaborted-execute-capacity.md" \
   "docs/plans/2026-06-14-docs-design-execute-no-store.md" \
   "docs/plans/2026-06-14-make-root-override-protection.md" \
   "docs/plans/2026-06-14-docs-design-integration-verification.md" \
@@ -561,12 +565,21 @@ if ! awk '
   /normalizeExecuteBody\(req.body\)/ { body = NR }
   /normalizeChatRequest\(extractParameters\(body.code\)\)/ { params = NR }
   /const apiKey = normalizeOpenAIApiKey\(\)/ { api_key = NR }
+  /if \(req\.aborted\)/ && !preaborted { preaborted = NR }
   /new OpenAI/ { client = NR }
-  END { exit !(auth_config && auth_check && content_type && body && params && api_key && limiter && client && auth_config < auth_check && auth_check < content_type && content_type < body && body < params && params < api_key && api_key < limiter && limiter < client) }
+  END { exit !(auth_config && auth_check && content_type && body && params && api_key && preaborted && limiter && client && auth_config < auth_check && auth_check < content_type && content_type < body && body < params && params < api_key && api_key < preaborted && preaborted < limiter && limiter < client) }
 ' "$API" ||
   ! grep -Fq "invalidContentTypeResponse.statusCode, 415" "$ROOT_DIR/scripts/test-execute-parser.ts" ||
   ! grep -Fq "currentWindow = Date.now()" "$ROOT_DIR/scripts/test-execute-parser.ts"; then
   printf '%s\n' "Execute capacity must apply after local validation and before provider setup." >&2
+  exit 1
+fi
+
+if ! grep -Fq 'if (req.aborted) {' "$API" || \
+  ! grep -Fq 'for (let count = 0; count < 10; count += 1)' "$ROOT_DIR/scripts/test-execute-provider.ts" || \
+  ! grep -Fq 'createTestRequest(true)' "$ROOT_DIR/scripts/test-execute-provider.ts" || \
+  ! grep -Fq 'connectedRequestStarted' "$ROOT_DIR/scripts/test-execute-provider.ts"; then
+  printf '%s\n' "Already-disconnected execute requests must preserve provider capacity." >&2
   exit 1
 fi
 
@@ -954,12 +967,28 @@ if ! grep -Fq "Ten eligible" "$README" ||
 fi
 
 if ! grep -Fq "Provider-eligible requests consume the process-local budget" "$README" ||
-  ! grep -Fq "locally valid, configured requests consume capacity" "$ROOT_DIR/SECURITY.md" ||
+  ! grep -Fq "still-connected, locally valid, configured requests consume capacity" "$ROOT_DIR/SECURITY.md" ||
   ! grep -Fq "Consume execute capacity only after local validation" "$VISION" ||
   ! grep -Fq "Moved execute capacity consumption after local validation" "$ROOT_DIR/CHANGES.md"; then
   printf '%s\n' "Project guidance must document provider-eligible budget consumption." >&2
   exit 1
 fi
+
+if ! grep -Fq "Already-disconnected requests stop before capacity admission" "$README" ||
+  ! grep -Fq "Already-disconnected requests stop before capacity admission" "$ROOT_DIR/SECURITY.md" ||
+  ! grep -Fq "Reject already-disconnected execute requests before capacity admission" "$VISION" ||
+  ! grep -Fq "already-aborted requests must return after validation and API-key configuration but before the limiter" "$ROOT_DIR/AGENTS.md"; then
+  printf '%s\n' "Project guidance must document the pre-aborted execute capacity boundary." >&2
+  exit 1
+fi
+
+for preaborted_plan in "$PREABORTED_CAPACITY_DESIGN" "$PREABORTED_CAPACITY_PLAN"; do
+  if ! grep -Fq "status: completed" "$preaborted_plan" ||
+    ! grep -Fq "make check" "$preaborted_plan"; then
+    printf '%s\n' "Pre-aborted execute capacity plans must record completed verification." >&2
+    exit 1
+  fi
+done
 
 if ! grep -Fq "Status: Completed" "$PROVIDER_ELIGIBLE_BUDGET_PLAN" ||
   ! grep -Fq "Node.js 20.19.5, 22.22.2, and 24.16.0" "$PROVIDER_ELIGIBLE_BUDGET_PLAN" ||

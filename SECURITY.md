@@ -38,8 +38,9 @@ Helpful reports include:
 - Enabled OpenAI calls use a 30-second timeout with automatic SDK retries
   disabled so one request cannot multiply provider attempts or run indefinitely.
 - A process-local fixed-window budget admits ten provider-eligible attempts per
-  minute. Only locally valid, configured requests consume capacity, and excess
-  eligible traffic receives `429` with `Retry-After` before provider setup.
+  minute. Only still-connected, locally valid, configured requests consume capacity,
+  and excess eligible traffic receives `429` with `Retry-After` before provider
+  setup. Already-disconnected requests stop before capacity admission.
   Public multi-instance deployments still require shared upstream
   authentication and rate limiting.
 - Whitespace-only OpenAI API keys must be rejected before execute capacity or

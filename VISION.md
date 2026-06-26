@@ -26,6 +26,7 @@ Priority:
 - Avoid committing API keys or proxy secrets
 - Keep the spend-capable execute route disabled unless deployment explicitly
   enables it
+- Reject already-disconnected execute requests before capacity admission
 - Keep visual changes tied to the docs onboarding purpose
 - Keep the docs workspace readable on mobile and preserve visible keyboard
   focus across navigation and action controls

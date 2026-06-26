@@ -43,6 +43,24 @@ function deferred() {
   return { promise, resolve };
 }
 
+function createTestRequest(aborted = false) {
+  return Object.assign(new EventEmitter(), {
+    aborted,
+    socket: new EventEmitter(),
+    method: "POST",
+    headers: {
+      authorization: "Bearer test-execute-token",
+      "content-type": "application/json",
+    },
+    body: {
+      code: `await openai.chat.completions.create({
+        model: "gpt-4o-mini",
+        messages: [{ role: "user", content: "Hello" }]
+      });`,
+    },
+  }) as unknown as NextApiRequest;
+}
+
 async function main() {
   const upstreamStarted = deferred();
   const upstreamDisconnected = deferred();
@@ -78,28 +96,36 @@ async function main() {
     process.env.OPENAI_API_KEY = "test-openai-key";
     process.env.OPENAI_BASE_URL = `http://127.0.0.1:${address.port}/v1`;
 
-    const request = Object.assign(new EventEmitter(), {
-      aborted: false,
-      socket: new EventEmitter(),
-      method: "POST",
-      headers: {
-        authorization: "Bearer test-execute-token",
-        "content-type": "application/json",
-      },
-      body: {
-        code: `await openai.chat.completions.create({
-          model: "gpt-4o-mini",
-          messages: [{ role: "user", content: "Hello" }]
-        });`,
-      },
-    }) as unknown as NextApiRequest;
+    for (let count = 0; count < 10; count += 1) {
+      const abandonedResponse = createTestResponse();
+      await executeHandler(
+        createTestRequest(true),
+        abandonedResponse as unknown as NextApiResponse,
+      );
+      assert.equal(abandonedResponse.body, null);
+    }
+
+    const request = createTestRequest();
     const response = createTestResponse();
     const handlerPromise = executeHandler(
       request,
       response as unknown as NextApiResponse,
     );
 
-    await upstreamStarted.promise;
+    const connectedRequestStarted = await Promise.race([
+      upstreamStarted.promise.then(() => true),
+      new Promise<false>((resolve) => setTimeout(() => resolve(false), 300)),
+    ]);
+    if (!connectedRequestStarted) {
+      Object.assign(request, { aborted: true });
+      request.emit("aborted");
+      await handlerPromise;
+    }
+    assert.equal(
+      connectedRequestStarted,
+      true,
+      `connected request did not reach upstream; status ${response.statusCode}`,
+    );
     Object.assign(request, { aborted: true });
     request.emit("aborted");
 
