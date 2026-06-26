@@ -94,10 +94,11 @@ blank prompts are not proxied, while accepted content retains its original
 spacing. Chat message objects may only contain `role` and
 `content`. Enabled provider calls use a fixed 30-second timeout with zero SDK
 retries so one interactive request has a bounded OpenAI attempt. Enabled
-provider work is aborted when the client connection closes. Enabled
-traffic is limited to ten enabled POST attempts per process per minute;
-exhausted windows return `429` with `Retry-After` before parsing or provider
-setup. Public multi-instance deployments still require a shared limiter. The build
+provider work is aborted when the client connection closes. Already-disconnected
+requests stop before capacity admission. Still-connected, locally valid,
+provider-configured requests consume one of ten process-local slots per minute;
+exhausted windows return `429` with `Retry-After` before provider setup. Public
+multi-instance deployments still require a shared limiter. The build
 script clears the ignored .next directory before invoking
 the Webpack-backed Next build so repeated local checks do not reuse stale traces.
 Every execute API response sets `Cache-Control: no-store` so submitted code,
@@ -161,6 +162,8 @@ When the required SDK or runtime is unavailable, use static checks and source re
   attempts per process per minute are admitted; excess eligible attempts receive
   `429` with `Retry-After` before provider setup. Multi-instance deployments
   still require shared upstream enforcement.
+- Already-disconnected requests stop before capacity admission; disconnects
+  after admission abort the in-flight SDK request.
 - Execute API responses use `Cache-Control: no-store` so code, model output,
   and errors are not intentionally cached.
 - Execute content-type validation rejects multi-value Content-Type headers to
@@ -213,6 +216,9 @@ When the required SDK or runtime is unavailable, use static checks and source re
   process-local execute request budget.
 - See `docs/plans/2026-06-13-docs-design-provider-eligible-budget.md` for local
   validation ordering before execute capacity consumption.
+- See `docs/plans/2026-06-26-preaborted-execute-capacity-design.md` and
+  `docs/plans/2026-06-26-preaborted-execute-capacity.md` for the disconnect
+  boundary before capacity admission.
 - See `docs/plans/2026-06-14-docs-design-execute-no-store.md` for the execute
   response cache boundary.
 - Use [`INTEGRATION_VERIFICATION.md`](INTEGRATION_VERIFICATION.md) for

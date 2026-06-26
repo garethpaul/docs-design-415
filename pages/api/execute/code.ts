@@ -578,6 +578,10 @@ export default async function handler(
     return res.status(503).json({ error: "OPENAI_API_KEY is not configured" });
   }
 
+  if (req.aborted) {
+    return;
+  }
+
   if (enforceExecuteRateLimit(res)) {
     return;
   }

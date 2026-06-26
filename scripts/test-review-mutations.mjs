@@ -48,6 +48,13 @@ const mutations = [
     to: "OPENAI_REQUEST_OPTIONS",
     command: ["npm", "run", "test:provider"],
   },
+  {
+    name: "pre-aborted execute capacity",
+    file: "pages/api/execute/code.ts",
+    from: "  if (req.aborted) {\n    return;\n  }\n\n  if (enforceExecuteRateLimit(res)) {",
+    to: "  if (enforceExecuteRateLimit(res)) {",
+    command: ["npm", "run", "test:provider"],
+  },
 ];
 
 for (const mutation of mutations) {

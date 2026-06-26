@@ -1,5 +1,62 @@
 # Changes
 
+## 2026-06-26 07:41 PDT
+
+Priority: correctness and provider-capacity preservation.
+
+Summary:
+
+- Prevented already-disconnected execute requests from consuming the
+  process-local fixed-window provider budget.
+
+Work completed:
+
+- Added an early disconnect boundary after local validation and API-key
+  configuration but before rate-limit admission.
+- Added a real-provider-harness regression covering ten abandoned requests,
+  one connected request, and the existing in-flight cancellation behavior.
+- Added hostile mutation, baseline, documentation, and implementation-plan
+  contracts for the new ordering.
+
+Threads:
+
+- Execute API correctness, disconnect lifecycle, rate-limit admission, and
+  maintained verification evidence.
+
+Files changed:
+
+- `pages/api/execute/code.ts`, `scripts/test-execute-provider.ts`,
+  `scripts/test-review-mutations.mjs`, `scripts/check-baseline.sh`, project
+  guidance, and the pre-aborted capacity plans.
+
+Validation:
+
+- Red phase: without the guard, the connected provider request failed with
+  `connected request did not reach upstream; status 429`.
+- Green focused checks: `npm run test:provider` and `npm run test:parser`.
+- `make check` passed on Node.js 20.20.2, 22.16.0, and 24.17.0, including the
+  production build, live HTTP test, seven hostile mutations, and zero-vulnerability audit.
+- External Make passed from `/tmp` on Node.js 24.17.0.
+- Implementation head `50a70ec45e39ecd93445ca8cd14d888584a72a93` passed both
+  hosted Node 20/22/24 matrices (`28245437588`, `28245440551`), CodeQL
+  (`28245438551`), and Vercel.
+- `codex review --base origin/docs-page` was attempted and skipped after the
+  Codex API returned HTTP 401 authentication errors, per the maintenance loop policy.
+
+Bugs and findings:
+
+- Ten valid requests carrying an existing aborted signal could exhaust the
+  per-process minute budget even though no response could be delivered.
+
+Blockers:
+
+- Codex review authentication is unavailable; all executable local and hosted
+  gates are green.
+
+Next action:
+
+- Verify the evidence-only final PR head, then merge that exact commit.
+
 ## 2026-06-25
 
 - Refreshed compatible CodeMirror command/language patches and OpenAI 6.45.0,
