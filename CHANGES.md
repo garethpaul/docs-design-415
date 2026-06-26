@@ -2,6 +2,9 @@
 
 ## 2026-06-25
 
+- Refreshed compatible CodeMirror command/language patches and OpenAI 6.45.0,
+  including the reviewed CodeMirror state 6.7.0 resolution, while preserving
+  the full Node 20/22/24 build, route, provider, mutation, and audit gates.
 - Added canonical, data-driven topic routes for all 28 documentation sidebar links, with dependency-free route and hostile-mutation coverage.
 - Revalidated static generation, route-specific 404 behavior, built HTTP coverage,
   and the shared sidebar declaration with an independent Codex review.
