@@ -45,6 +45,7 @@ EMPTY_MODEL_ALLOWLIST_PLAN="$ROOT_DIR/docs/plans/2026-06-15-explicit-empty-model
 MESSAGE_WHITESPACE_CONTRACT_PLAN="$ROOT_DIR/docs/plans/2026-06-15-message-whitespace-contract.md"
 EDITOR_JAVASCRIPT_PLAN="$ROOT_DIR/docs/plans/2026-06-15-editor-javascript-language.md"
 DEPENDENCY_REFRESH_PLAN="$ROOT_DIR/docs/plans/2026-06-18-compatible-dependency-refresh.md"
+DEPENDENCY_PATCH_PLAN="$ROOT_DIR/docs/plans/2026-06-25-compatible-dependency-patches.md"
 CI_WORKFLOW="$ROOT_DIR/.github/workflows/check.yml"
 MAKEFILE="$ROOT_DIR/Makefile"
 
@@ -105,6 +106,7 @@ for path in \
   "docs/plans/2026-06-15-explicit-empty-model-allowlist.md" \
   "docs/plans/2026-06-15-editor-javascript-language.md" \
   "docs/plans/2026-06-18-compatible-dependency-refresh.md" \
+  "docs/plans/2026-06-25-compatible-dependency-patches.md" \
   "docs/plans/2026-06-15-message-whitespace-contract.md" \
   "scripts/test-execute-parser.ts" \
   "scripts/test-execute-provider.ts" \
@@ -355,19 +357,22 @@ if (pkg.overrides["@babel/runtime"] !== "7.29.7" || pkg.overrides["form-data"] !
   throw new Error("package.json must override vulnerable transitive parser/API dependencies");
 }
 for (const [name, version] of Object.entries({
+  "@codemirror/commands": "6.10.4",
+  "@codemirror/language": "6.12.4",
   "@codemirror/search": "6.7.1",
   "@radix-ui/react-menubar": "1.1.18",
   "@radix-ui/react-navigation-menu": "1.2.16",
-  openai: "6.44.0",
+  openai: "6.45.0",
 })) {
   if (pkg.dependencies?.[name] !== version ||
+      lock.packages?.[""]?.dependencies?.[name] !== version ||
       lock.packages?.[`node_modules/${name}`]?.version !== version) {
     throw new Error(`package.json and package-lock.json must pin ${name} ${version}`);
   }
 }
 for (const [name, version] of Object.entries({
   next: "16.2.9",
-  openai: "6.44.0",
+  openai: "6.45.0",
   react: "19.2.7",
   "react-dom": "19.2.7",
   "@codemirror/lint": "6.9.7",
@@ -375,6 +380,34 @@ for (const [name, version] of Object.entries({
 })) {
   if (pkg.dependencies?.[name] !== version) {
     throw new Error(`package.json must pin ${name} ${version}`);
+  }
+}
+const reviewedArtifacts = {
+  "node_modules/@codemirror/commands": [
+    "6.10.4",
+    "https://registry.npmjs.org/@codemirror/commands/-/commands-6.10.4.tgz",
+    "sha512-Ryk9y9T0FFVF0cUGhAknveAyUOl/A1qReTFi+qPKtOh2Z9F4AUBz3XOrYD4ZEgZirdugVzHvd/2/Wcwy5OliTg==",
+  ],
+  "node_modules/@codemirror/language": [
+    "6.12.4",
+    "https://registry.npmjs.org/@codemirror/language/-/language-6.12.4.tgz",
+    "sha512-1q4PaT+o6PbgpkJt4Q8Fv5XJxTy4FUZ4MWETtyiDw3J0Pyr9E2vqcKL+k9wcvjNTIsauxvE7OfmWj3FRPHQ76A==",
+  ],
+  "node_modules/@codemirror/state": [
+    "6.7.0",
+    "https://registry.npmjs.org/@codemirror/state/-/state-6.7.0.tgz",
+    "sha512-Zbl9NyscLMZkfXPQnNAIIAFftidrA1UbcJEIMp24C0Bukc2I5T8wJS0wsXYsnDOqCFJUeJ1BITGNs5CqPDSmSg==",
+  ],
+  "node_modules/openai": [
+    "6.45.0",
+    "https://registry.npmjs.org/openai/-/openai-6.45.0.tgz",
+    "sha512-5DQVNErssk0afNpTTHUm/qZPU4iKR9OYdNid8Ib4puq4gHNNvGWZht2zY4h9a8JMF949Ik6m8gQutllVPbjdnw==",
+  ],
+};
+for (const [path, [version, resolved, integrity]] of Object.entries(reviewedArtifacts)) {
+  const artifact = lock.packages?.[path];
+  if (!artifact || artifact.version !== version || artifact.resolved !== resolved || artifact.integrity !== integrity) {
+    throw new Error(`package-lock.json must retain reviewed artifact ${path}`);
   }
 }
 if (pkg.dependencies?.["@codemirror/lang-python"] !== undefined) {
@@ -406,6 +439,53 @@ for dependency_plan_contract in \
   "Eight isolated dependency-contract mutations were rejected"; do
   if ! grep -Fq "$dependency_plan_contract" "$DEPENDENCY_REFRESH_PLAN"; then
     printf '%s\n' "Dependency refresh plan must record completed evidence: $dependency_plan_contract" >&2
+    exit 1
+  fi
+done
+
+dependency_patch_status=$(sed -n 's/^status: //p' "$DEPENDENCY_PATCH_PLAN")
+case "$dependency_patch_status" in
+  pending_hosted_verification)
+    if ! grep -Fq "Exact-head hosted checks remain pending." "$DEPENDENCY_PATCH_PLAN"; then
+      printf '%s\n' "Pending dependency patch plan must record pending hosted checks." >&2
+      exit 1
+    fi
+    ;;
+  completed)
+    for dependency_patch_contract in \
+      "Exact-head hosted Node 20, Node 22, and Node 24 checks passed." \
+      "isolated dependency mutations were rejected"; do
+      if ! grep -Fq "$dependency_patch_contract" "$DEPENDENCY_PATCH_PLAN"; then
+        printf '%s\n' "Completed dependency patch plan must retain evidence: $dependency_patch_contract" >&2
+        exit 1
+      fi
+    done
+    ;;
+  *)
+    printf '%s\n' "Dependency patch plan must be pending hosted verification or completed." >&2
+    exit 1
+    ;;
+esac
+
+for dependency_patch_contract in \
+  "@codemirror/commands 6.10.4" \
+  "@codemirror/language 6.12.4" \
+  "@codemirror/state 6.7.0" \
+  "OpenAI 6.45.0" \
+  "TypeScript 6 and @types/node 26 remain deferred" \
+  "Node 20, Node 22, and Node 24" \
+  "make check"; do
+  if ! grep -Fq "$dependency_patch_contract" "$DEPENDENCY_PATCH_PLAN"; then
+    printf '%s\n' "Dependency patch plan must retain local evidence: $dependency_patch_contract" >&2
+    exit 1
+  fi
+done
+
+for change_contract in \
+  "OpenAI 6.45.0" \
+  "CodeMirror state 6.7.0"; do
+  if ! grep -Fq "$change_contract" "$ROOT_DIR/CHANGES.md"; then
+    printf '%s\n' "CHANGES.md must retain dependency patch evidence: $change_contract" >&2
     exit 1
   fi
 done
