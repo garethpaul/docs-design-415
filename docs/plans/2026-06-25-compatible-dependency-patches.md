@@ -1,6 +1,6 @@
 # Refresh Compatible Dependency Patches
 
-status: pending_hosted_verification
+status: completed
 
 ## Context
 
@@ -63,7 +63,11 @@ across direct pins, the root lockfile, reviewed direct and transitive artifact
 versions and integrity, plan status, compatibility boundaries, and CHANGES.md
 evidence.
 
-Exact-head hosted checks remain pending.
+Exact-head hosted Node 20, Node 22, and Node 24 checks passed. The verified
+implementation commit was `d8de4537813e3089642ac2d74ba2266da5263fdf`.
+Push workflow run `28218768719`, pull-request workflow run `28218775316`, and
+CodeQL run `28218775029` completed successfully. The Vercel preview deployment
+also completed successfully without a live OpenAI provider request.
 
 ## Sources
 
