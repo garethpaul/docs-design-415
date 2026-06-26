@@ -36,8 +36,12 @@ Validation:
 - Green focused checks: `npm run test:provider` and `npm run test:parser`.
 - `make check` passed on Node.js 20.20.2, 22.16.0, and 24.17.0, including the
   production build, live HTTP test, seven hostile mutations, and zero-vulnerability audit.
-- External Make passed from `/tmp` on Node.js 24.17.0. Hosted checks and
-  exact-head review are pending.
+- External Make passed from `/tmp` on Node.js 24.17.0.
+- Implementation head `50a70ec45e39ecd93445ca8cd14d888584a72a93` passed both
+  hosted Node 20/22/24 matrices (`28245437588`, `28245440551`), CodeQL
+  (`28245438551`), and Vercel.
+- `codex review --base origin/docs-page` was attempted and skipped after the
+  Codex API returned HTTP 401 authentication errors, per the maintenance loop policy.
 
 Bugs and findings:
 
@@ -46,12 +50,12 @@ Bugs and findings:
 
 Blockers:
 
-- None for local implementation; hosted verification awaits the pull request.
+- Codex review authentication is unavailable; all executable local and hosted
+  gates are green.
 
 Next action:
 
-- Push the focused pull request, then verify hosted checks and the exact PR head
-  before merge.
+- Verify the evidence-only final PR head, then merge that exact commit.
 
 ## 2026-06-25
 

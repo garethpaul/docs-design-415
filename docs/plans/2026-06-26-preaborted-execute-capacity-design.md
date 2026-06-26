@@ -50,4 +50,8 @@ admission.
 - `make check` passes on Node.js 20.20.2, 22.16.0, and 24.17.0 with seven
   hostile mutations rejected and zero audit vulnerabilities.
 - External Make passes from `/tmp` on Node.js 24.17.0.
-- Hosted checks and exact-head review are pending.
+- Implementation head `50a70ec45e39ecd93445ca8cd14d888584a72a93` passes both
+  hosted Node 20/22/24 matrices (`28245437588`, `28245440551`), CodeQL
+  (`28245438551`), and Vercel.
+- Codex review was attempted and skipped after HTTP 401 authentication errors.
+- The evidence-only final head still requires hosted verification before merge.

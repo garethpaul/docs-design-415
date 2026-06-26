@@ -63,4 +63,9 @@ status: completed
 - `npm run test:mutations` rejects all seven hostile mutations.
 - `make check` passes on Node.js 20.20.2, 22.16.0, and 24.17.0; external Make
   passes from `/tmp` on Node.js 24.17.0.
-- Pending: hosted checks, exact-head review, and merge verification.
+- Implementation head `50a70ec45e39ecd93445ca8cd14d888584a72a93` passes both
+  hosted Node 20/22/24 matrices (`28245437588`, `28245440551`), CodeQL
+  (`28245438551`), and Vercel.
+- `codex review --base origin/docs-page` was attempted and skipped after HTTP
+  401 authentication errors.
+- Pending: evidence-only final-head hosted checks and merge verification.
